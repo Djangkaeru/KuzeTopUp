@@ -1,0 +1,476 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+:root {
+    --primary: #6c63ff;
+    --secondary: #ff6584;
+    --dark: #0f0f1a;
+    --darker: #080810;
+    --card: #1a1a2e;
+    --text: #e0e0e0;
+    --accent: #00d4ff;
+}
+
+body {
+    background-color: var(--dark);
+    color: var(--text);
+    scroll-behavior: smooth;
+}
+
+/* NAVBAR */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: rgba(15, 15, 26, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    border-bottom: 1px solid rgba(108, 99, 255, 0.3);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo i { color: var(--primary); }
+.logo b { color: var(--primary); }
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 30px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover { color: var(--primary); }
+
+/* HERO */
+.hero {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 100px 20px 60px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(108,99,255,0.15) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.hero-content h1 span {
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-content p {
+    font-size: 1.1rem;
+    color: #aaa;
+    margin-bottom: 35px;
+}
+
+.btn-hero {
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    color: white;
+    padding: 14px 40px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 0 20px rgba(108,99,255,0.4);
+}
+
+.btn-hero:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 35px rgba(108,99,255,0.6);
+}
+
+/* GAMES */
+.games-section {
+    padding: 80px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 10px;
+}
+
+.section-sub {
+    text-align: center;
+    color: #888;
+    margin-bottom: 50px;
+    font-size: 0.95rem;
+}
+
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 25px;
+}
+
+.game-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 25px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    border: 1px solid rgba(255,255,255,0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.game-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.game-card:hover::before { opacity: 1; }
+
+.game-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(108,99,255,0.2);
+}
+
+.game-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+}
+
+.game-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 6px;
+}
+
+.game-card p {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.badge {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: var(--secondary);
+    color: white;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+/* CARA ORDER */
+.cara-order {
+    background: var(--card);
+    padding: 80px 20px;
+}
+
+.steps {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.step {
+    text-align: center;
+    flex: 1;
+    min-width: 180px;
+    max-width: 220px;
+}
+
+.step-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 0 20px rgba(108,99,255,0.3);
+}
+
+.step h3 {
+    font-size: 1rem;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.step p {
+    font-size: 0.85rem;
+    color: #888;
+    line-height: 1.5;
+}
+
+/* FOOTER */
+.footer {
+    background: var(--darker);
+    padding: 40px 20px;
+    text-align: center;
+    border-top: 1px solid rgba(108,99,255,0.2);
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.footer p {
+    color: #555;
+    font-size: 0.85rem;
+}
+
+.sosmed {
+    display: flex;
+    gap: 15px;
+}
+
+.sosmed a {
+    color: #555;
+    font-size: 1.2rem;
+    transition: color 0.3s;
+}
+
+.sosmed a:hover { color: var(--primary); }
+/* TOMBOL BACK */
+.btn-back {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-back:hover { color: var(--primary); }
+
+/* GAME DETAIL */
+.game-detail {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 120px 20px 60px;
+}
+
+.game-detail-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.game-detail-icon {
+    font-size: 5rem;
+    margin-bottom: 15px;
+}
+
+.game-detail-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.game-detail-header p {
+    color: #888;
+    font-size: 0.95rem;
+}
+
+/* FORM ID */
+.form-id {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 30px;
+    margin-bottom: 40px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.form-id h2 {
+    font-size: 1.1rem;
+    color: white;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.input-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.input-group input {
+    flex: 1;
+    min-width: 200px;
+    background: var(--dark);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 10px;
+    padding: 12px 18px;
+    color: white;
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+    transition: border 0.3s;
+}
+
+.input-group input:focus {
+    border-color: var(--primary);
+}
+
+.input-group input::placeholder { color: #555; }
+
+/* NOMINAL */
+.nominal-section h2 {
+    font-size: 1.1rem;
+    color: white;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.nominal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 15px;
+    margin-bottom: 40px;
+}
+
+.nominal-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 20px 15px;
+    text-align: center;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.05);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.nominal-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-5px);
+}
+
+.nominal-card.selected {
+    border-color: var(--primary);
+    background: rgba(108,99,255,0.15);
+    box-shadow: 0 0 20px rgba(108,99,255,0.3);
+}
+
+.nominal-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.nominal-card h3 {
+    font-size: 0.85rem;
+    color: white;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.nominal-card p {
+    font-size: 0.8rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* BUY SECTION */
+.buy-section {
+    text-align: center;
+}
+
+.selected-info {
+    background: rgba(108,99,255,0.1);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 10px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.btn-buy {
+    background: #333;
+    color: #888;
+    border: none;
+    padding: 15px 60px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-buy.active {
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    color: white;
+    box-shadow: 0 0 25px rgba(108,99,255,0.4);
+}
+
+.btn-buy.active:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 35px rgba(108,99,255,0.6);
+}

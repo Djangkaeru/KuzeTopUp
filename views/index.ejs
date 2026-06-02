@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KuzeTopUp - Top Up Game Tercepat</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <span>Kuze<b>TopUp</b></span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home" onclick="event.preventDefault(); document.querySelector('#home').scrollIntoView({behavior:'smooth'})">Home</a></li>
+                <li><a href="#games" onclick="event.preventDefault(); document.querySelector('#games').scrollIntoView({behavior:'smooth'})">Games</a></li>
+                <li><a href="#cara-order" onclick="event.preventDefault(); document.querySelector('#cara-order').scrollIntoView({behavior:'smooth'})">Cara Order</a></li>
+                <li><a href="#kontak" onclick="event.preventDefault(); document.querySelector('#kontak').scrollIntoView({behavior:'smooth'})">Kontak</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1>Top Up Game<br><span>Tercepat & Termurah</span></h1>
+            <p>Proses otomatis 24 jam, aman, dan terpercaya!</p>
+            <a href="#games" class="btn-hero" onclick="event.preventDefault(); document.querySelector('#games').scrollIntoView({behavior:'smooth'})">Mulai Top Up</a>
+        </div>
+    </section>
+
+    <!-- GAMES -->
+    <section class="games-section" id="games">
+        <h2 class="section-title">Pilih Game</h2>
+        <p class="section-sub">Top up game favoritmu dengan mudah</p>
+        <div class="games-grid">
+            <% games.forEach(game => { %>
+            <div class="game-card" onclick="window.location='/game/<%= game.id %>'">
+                <% if (game.badge) { %>
+                <span class="badge"><%= game.badge %></span>
+                <% } %>
+                <div class="game-icon"><%= game.icon %></div>
+                <h3><%= game.name %></h3>
+                <p><%= game.category %></p>
+            </div>
+            <% }) %>
+        </div>
+    </section>
+
+    <!-- CARA ORDER -->
+    <section class="cara-order" id="cara-order">
+        <h2 class="section-title">Cara Order</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-icon"><i class="fas fa-gamepad"></i></div>
+                <h3>1. Pilih Game</h3>
+                <p>Pilih game yang ingin kamu top up</p>
+            </div>
+            <div class="step">
+                <div class="step-icon"><i class="fas fa-coins"></i></div>
+                <h3>2. Pilih Nominal</h3>
+                <p>Pilih jumlah diamond/koin yang diinginkan</p>
+            </div>
+            <div class="step">
+                <div class="step-icon"><i class="fas fa-wallet"></i></div>
+                <h3>3. Bayar</h3>
+                <p>Pilih metode pembayaran favoritmu</p>
+            </div>
+            <div class="step">
+                <div class="step-icon"><i class="fas fa-bolt"></i></div>
+                <h3>4. Terima</h3>
+                <p>Item langsung masuk ke akunmu!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer" id="kontak">
+        <div class="footer-content">
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <span>Kuze<b>TopUp</b></span>
+            </div>
+            <p>© 2026 KuzeTopUp. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+</body>
+</html>

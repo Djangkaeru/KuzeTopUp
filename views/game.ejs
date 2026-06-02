@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= game.name %> - KuzeTopUp</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <span>Kuze<b>TopUp</b></span>
+            </div>
+            <a href="/" class="btn-back"><i class="fas fa-arrow-left"></i> Kembali</a>
+        </div>
+    </nav>
+
+    <!-- DETAIL GAME -->
+    <section class="game-detail">
+        <div class="game-detail-header">
+            <div class="game-detail-icon"><%= game.icon %></div>
+            <h1><%= game.name %></h1>
+            <p><%= game.category %></p>
+        </div>
+
+        <!-- FORM ID -->
+        <div class="form-id">
+            <h2>Masukkan ID Game</h2>
+            <div class="input-group">
+                <input type="text" id="userId" placeholder="Masukkan User ID" />
+                <input type="text" id="serverId" placeholder="Server ID (jika ada)" />
+            </div>
+        </div>
+
+        <!-- PILIH NOMINAL -->
+        <div class="nominal-section">
+            <h2>Pilih Nominal</h2>
+            <div class="nominal-grid">
+                <% game.packages.forEach(pkg => { %>
+                <div class="nominal-card" onclick="selectNominal(this, '<%= pkg.name %>', <%= pkg.price %>)">
+                    <% if (pkg.bonus) { %><span class="badge">+<%= pkg.bonus %></span><% } %>
+                    <div class="nominal-icon">💎</div>
+                    <h3><%= pkg.name %></h3>
+                    <p>Rp <%= pkg.price.toLocaleString('id-ID') %></p>
+                </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <!-- TOMBOL BELI -->
+        <div class="buy-section">
+            <div class="selected-info" id="selectedInfo" style="display:none">
+                <p>Dipilih: <span id="selectedName"></span> — <strong id="selectedPrice"></strong></p>
+            </div>
+            <button class="btn-buy" id="btnBuy" onclick="submitOrder()">Pilih Nominal Dulu</button>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <span>Kuze<b>TopUp</b></span>
+            </div>
+            <p>© 2024 KuzeTopUp. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    <script>
+        let selectedPkg = null;
+
+        function selectNominal(el, name, price) {
+            document.querySelectorAll('.nominal-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedPkg = { name, price };
+
+            document.getElementById('selectedInfo').style.display = 'block';
+            document.getElementById('selectedName').textContent = name;
+            document.getElementById('selectedPrice').textContent = 'Rp ' + price.toLocaleString('id-ID');
+            document.getElementById('btnBuy').textContent = 'Beli Sekarang';
+            document.getElementById('btnBuy').classList.add('active');
+        }
+
+        function submitOrder() {
+            if (!selectedPkg) {
+                alert('Pilih nominal dulu ya!');
+                return;
+            }
+            const userId = document.getElementById('userId').value;
+            if (!userId) {
+                alert('Masukkan User ID dulu!');
+                return;
+            }
+            alert(`✅ Pesanan berhasil!\n\nGame: <%= game.name %>\nNominal: ${selectedPkg.name}\nUser ID: ${userId}\nTotal: Rp ${selectedPkg.price.toLocaleString('id-ID')}\n\nTerima kasih sudah order di KuzeTopUp!`);
+        }
+    </script>
+</body>
+</html>
