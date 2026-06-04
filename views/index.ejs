@@ -98,11 +98,45 @@
             Top up game favoritmu dengan mudah
         </p>
 
+        <%
+            const categories = [...new Set(games.map(game => game.category))];
+        %>
+
+        <div class="game-tools" aria-label="Cari dan filter game">
+            <div class="search-box">
+                <i class="fas fa-magnifying-glass"></i>
+                <input
+                    type="search"
+                    id="gameSearch"
+                    placeholder="Cari game..."
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="category-filters" id="categoryFilters">
+                <button type="button" class="filter-chip active" data-category="all">
+                    Semua
+                </button>
+
+                <% categories.forEach(category => { %>
+                <button type="button" class="filter-chip" data-category="<%= category %>">
+                    <%= category %>
+                </button>
+                <% }) %>
+            </div>
+        </div>
+
+        <p class="empty-games" id="emptyGames" hidden>
+            Game tidak ditemukan.
+        </p>
+
         <div class="games-grid">
 
             <% games.forEach(game => { %>
 
             <div class="game-card"
+            data-game-name="<%= game.name %>"
+            data-game-category="<%= game.category %>"
             onclick="window.location='/game/<%= game.id %>'">
 
                 <% if (game.badge) { %>

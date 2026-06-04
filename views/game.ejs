@@ -24,7 +24,9 @@
     <!-- DETAIL GAME -->
     <section class="game-detail">
         <div class="game-detail-header">
-            <div class="game-detail-icon"><%= game.icon %></div>
+            <div class="game-detail-icon">
+                <img src="<%= game.icon %>" alt="<%= game.name %>">
+            </div>
             <h1><%= game.name %></h1>
             <p><%= game.category %></p>
         </div>
@@ -33,8 +35,8 @@
         <div class="form-id">
             <h2>Masukkan ID Game</h2>
             <div class="input-group">
-                <input type="text" id="userId" placeholder="Masukkan User ID" />
-                <input type="text" id="serverId" placeholder="Server ID (jika ada)" />
+                <input type="text" id="userId" placeholder="Masukkan User ID">
+                <input type="text" id="serverId" placeholder="Server ID (jika ada)">
             </div>
         </div>
 
@@ -45,7 +47,9 @@
                 <% game.packages.forEach(pkg => { %>
                 <div class="nominal-card" onclick="selectNominal(this, '<%= pkg.name %>', <%= pkg.price %>)">
                     <% if (pkg.bonus) { %><span class="badge">+<%= pkg.bonus %></span><% } %>
-                    <div class="nominal-icon">💎</div>
+                    <div class="nominal-icon">
+                        <i class="fas fa-gem"></i>
+                    </div>
                     <h3><%= pkg.name %></h3>
                     <p>Rp <%= pkg.price.toLocaleString('id-ID') %></p>
                 </div>
@@ -53,12 +57,37 @@
             </div>
         </div>
 
+        <!-- PILIH PEMBAYARAN -->
+        <div class="payment-section">
+            <h2>Pilih Pembayaran</h2>
+            <div class="payment-grid">
+                <% paymentMethods.forEach(method => { %>
+                <button
+                    type="button"
+                    class="payment-card"
+                    data-payment-name="<%= method.name %>"
+                    onclick="selectPayment(this)"
+                    aria-pressed="false"
+                >
+                    <span class="payment-icon">
+                        <i class="fas <%= method.icon %>"></i>
+                    </span>
+                    <span class="payment-copy">
+                        <strong><%= method.name %></strong>
+                        <small><%= method.description %></small>
+                    </span>
+                </button>
+                <% }) %>
+            </div>
+        </div>
+
         <!-- TOMBOL BELI -->
         <div class="buy-section">
             <div class="selected-info" id="selectedInfo" style="display:none">
-                <p>Dipilih: <span id="selectedName"></span> — <strong id="selectedPrice"></strong></p>
+                <p>Nominal: <span id="selectedName"></span> - <strong id="selectedPrice"></strong></p>
+                <p>Pembayaran: <span id="selectedPayment">Belum dipilih</span></p>
             </div>
-            <button class="btn-buy" id="btnBuy" onclick="submitOrder()">Pilih Nominal Dulu</button>
+            <button class="btn-buy" id="btnBuy" onclick="submitOrder()">Lengkapi Order</button>
         </div>
     </section>
 
@@ -69,24 +98,53 @@
                 <i class="fas fa-bolt"></i>
                 <span>Kuze<b>TopUp</b></span>
             </div>
-            <p>© 2024 KuzeTopUp. All rights reserved.</p>
+            <p>&copy; 2026 KuzeTopUp. All rights reserved.</p>
         </div>
     </footer>
 
     <script src="/js/script.js"></script>
     <script>
         let selectedPkg = null;
+        let selectedPayment = null;
+
+        function updateBuyState() {
+            const btnBuy = document.getElementById('btnBuy');
+            const selectedInfo = document.getElementById('selectedInfo');
+
+            selectedInfo.style.display = selectedPkg ? 'block' : 'none';
+
+            if (selectedPkg && selectedPayment) {
+                btnBuy.textContent = 'Beli Sekarang';
+                btnBuy.classList.add('active');
+                return;
+            }
+
+            btnBuy.classList.remove('active');
+            btnBuy.textContent = selectedPkg ? 'Pilih Pembayaran' : 'Pilih Nominal Dulu';
+        }
 
         function selectNominal(el, name, price) {
-            document.querySelectorAll('.nominal-card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('.nominal-card').forEach(card => card.classList.remove('selected'));
             el.classList.add('selected');
             selectedPkg = { name, price };
 
-            document.getElementById('selectedInfo').style.display = 'block';
             document.getElementById('selectedName').textContent = name;
             document.getElementById('selectedPrice').textContent = 'Rp ' + price.toLocaleString('id-ID');
-            document.getElementById('btnBuy').textContent = 'Beli Sekarang';
-            document.getElementById('btnBuy').classList.add('active');
+            updateBuyState();
+        }
+
+        function selectPayment(el) {
+            document.querySelectorAll('.payment-card').forEach(card => {
+                card.classList.remove('selected');
+                card.setAttribute('aria-pressed', 'false');
+            });
+
+            el.classList.add('selected');
+            el.setAttribute('aria-pressed', 'true');
+            selectedPayment = el.dataset.paymentName;
+
+            document.getElementById('selectedPayment').textContent = selectedPayment;
+            updateBuyState();
         }
 
         function submitOrder() {
@@ -94,12 +152,22 @@
                 alert('Pilih nominal dulu ya!');
                 return;
             }
-            const userId = document.getElementById('userId').value;
+
+            if (!selectedPayment) {
+                alert('Pilih metode pembayaran dulu!');
+                return;
+            }
+
+            const userId = document.getElementById('userId').value.trim();
             if (!userId) {
                 alert('Masukkan User ID dulu!');
                 return;
             }
-            alert(`✅ Pesanan berhasil!\n\nGame: <%= game.name %>\nNominal: ${selectedPkg.name}\nUser ID: ${userId}\nTotal: Rp ${selectedPkg.price.toLocaleString('id-ID')}\n\nTerima kasih sudah order di KuzeTopUp!`);
+
+            const serverId = document.getElementById('serverId').value.trim();
+            const serverInfo = serverId ? `\nServer ID: ${serverId}` : '';
+
+            alert(`Pesanan berhasil!\n\nGame: <%= game.name %>\nNominal: ${selectedPkg.name}\nUser ID: ${userId}${serverInfo}\nPembayaran: ${selectedPayment}\nTotal: Rp ${selectedPkg.price.toLocaleString('id-ID')}\n\nTerima kasih sudah order di KuzeTopUp!`);
         }
     </script>
 </body>

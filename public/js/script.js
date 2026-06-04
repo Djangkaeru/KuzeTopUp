@@ -35,3 +35,59 @@ document.querySelectorAll('.game-card').forEach(card => {
     card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
     observer.observe(card);
 });
+
+// Search dan filter kategori game
+const gameSearch = document.getElementById('gameSearch');
+const filterChips = document.querySelectorAll('.filter-chip');
+const gameCards = document.querySelectorAll('.game-card');
+const emptyGames = document.getElementById('emptyGames');
+let activeCategory = 'all';
+
+function normalizeText(text) {
+    return text.toLowerCase().trim();
+}
+
+function updateGameList() {
+    const keyword = normalizeText(gameSearch ? gameSearch.value : '');
+    let visibleCount = 0;
+
+    gameCards.forEach(card => {
+        const gameName = normalizeText(card.dataset.gameName || card.textContent);
+        const gameCategory = card.dataset.gameCategory || '';
+        const matchesName = gameName.includes(keyword);
+        const matchesCategory = activeCategory === 'all' || gameCategory === activeCategory;
+        const shouldShow = matchesName && matchesCategory;
+
+        card.classList.toggle('is-hidden', !shouldShow);
+
+        if (shouldShow) {
+            visibleCount += 1;
+        }
+    });
+
+    if (emptyGames) {
+        emptyGames.hidden = visibleCount > 0;
+    }
+}
+
+if (gameSearch && gameCards.length > 0) {
+    gameSearch.addEventListener('input', updateGameList);
+
+    filterChips.forEach(chip => {
+        chip.setAttribute('aria-pressed', chip.classList.contains('active') ? 'true' : 'false');
+
+        chip.addEventListener('click', () => {
+            activeCategory = chip.dataset.category || 'all';
+
+            filterChips.forEach(item => {
+                const isActive = item === chip;
+                item.classList.toggle('active', isActive);
+                item.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+
+            updateGameList();
+        });
+    });
+
+    updateGameList();
+}

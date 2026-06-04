@@ -92,6 +92,39 @@ const games = [
     }
 ];
 
+const paymentMethods = [
+    {
+        name: 'QRIS',
+        description: 'Scan semua e-wallet',
+        icon: 'fa-qrcode'
+    },
+    {
+        name: 'DANA',
+        description: 'Bayar dari aplikasi DANA',
+        icon: 'fa-wallet'
+    },
+    {
+        name: 'OVO',
+        description: 'Masukkan nomor OVO aktif',
+        icon: 'fa-mobile-screen-button'
+    },
+    {
+        name: 'GoPay',
+        description: 'Bayar lewat aplikasi Gojek',
+        icon: 'fa-wallet'
+    },
+    {
+        name: 'ShopeePay',
+        description: 'Cocok untuk promo e-wallet',
+        icon: 'fa-bag-shopping'
+    },
+    {
+        name: 'Bank Transfer',
+        description: 'BCA, BRI, Mandiri, BNI',
+        icon: 'fa-building-columns'
+    }
+];
+
 app.get('/', (req, res) => {
     res.render('index', { games });
 });
@@ -99,7 +132,7 @@ app.get('/', (req, res) => {
 app.get('/game/:id', (req, res) => {
     const game = games.find(g => g.id === parseInt(req.params.id));
     if (!game) return res.redirect('/');
-    res.render('game', { game });
+    res.render('game', { game, paymentMethods });
 });
 
 app.listen(3000, () => {
