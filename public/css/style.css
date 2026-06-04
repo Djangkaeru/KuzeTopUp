@@ -15,10 +15,13 @@
     --accent: #00d4ff;
 }
 
+html{
+    scroll-behavior: smooth;
+}
+
 body {
     background-color: var(--dark);
     color: var(--text);
-    scroll-behavior: smooth;
 }
 
 /* NAVBAR */
@@ -91,7 +94,7 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-}
+}=
 
 .hero-content h1 {
     font-size: 3.5rem;
@@ -188,8 +191,23 @@ body {
 }
 
 .game-icon {
-    font-size: 2.5rem;
-    margin-bottom: 12px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.game-icon img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 15px;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.game-card:hover .game-icon img {
+    transform: scale(1.08);
 }
 
 .game-card h3 {
