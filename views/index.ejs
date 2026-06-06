@@ -41,6 +41,9 @@
 
             <div class="nav-auth">
                 <% if (user) { %>
+                    <a href="/history" class="btn-nav-login">
+                        <i class="fas fa-clock-rotate-left"></i> Riwayat
+                    </a>
                     <div class="nav-user">
                         <i class="fas fa-circle-user"></i>
                         <span><%= user.username %></span>

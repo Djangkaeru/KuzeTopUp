@@ -133,30 +133,63 @@ app.get('/game/:id', requireLogin, (req, res) => {
     res.render('game', { game, paymentMethods, user: req.session.user });
 });
 
-// ─── SIMPAN TRANSAKSI (dari form order) ──────────────────────────────
+// ─── ORDER (simpan transaksi) ─────────────────────────────────────────
 app.post('/order', requireLogin, (req, res) => {
-    const { gameId, nominal, price, userId: gameUserId, serverId, payment } = req.body;
+    const { gameId, nominal, price, gameUserId, serverId, payment } = req.body;
+
+    // Validasi server-side
+    if (!gameId || !nominal || !price || !gameUserId || !payment) {
+        return res.json({ success: false, error: 'Data tidak lengkap!' });
+    }
+
+    if (!gameUserId.trim() || gameUserId.trim().length < 3) {
+        return res.json({ success: false, error: 'User ID game tidak valid!' });
+    }
 
     const game = games.find(g => g.id === parseInt(gameId));
-    if (!game) return res.status(400).json({ error: 'Game tidak ditemukan' });
+    if (!game) return res.json({ success: false, error: 'Game tidak ditemukan!' });
+
+    const pkg = game.packages.find(p => p.name === nominal);
+    if (!pkg) return res.json({ success: false, error: 'Paket tidak ditemukan!' });
+
+    // Cegah manipulasi harga dari client
+    if (pkg.price !== parseInt(price)) {
+        return res.json({ success: false, error: 'Harga tidak valid!' });
+    }
 
     const transaction = {
         id: transactions.length + 1,
         code: generateTransactionCode(),
-        username: req.session.user.username,
         userId: req.session.user.id,
+        username: req.session.user.username,
         game: game.name,
         nominal,
-        userId: gameUserId,
+        gameUserId: gameUserId.trim(),
         serverId: serverId || null,
         payment,
-        total: parseInt(price),
+        total: pkg.price,
         status: 'pending',
         createdAt: new Date()
     };
 
     transactions.push(transaction);
     res.json({ success: true, code: transaction.code });
+});
+
+// ─── RIWAYAT TRANSAKSI USER ───────────────────────────────────────────
+app.get('/history', requireLogin, (req, res) => {
+    const userTransactions = transactions
+        .filter(t => t.userId === req.session.user.id)
+        .reverse();
+    res.render('history', { user: req.session.user, transactions: userTransactions });
+});
+
+// ─── CEK STATUS TRANSAKSI ─────────────────────────────────────────────
+app.get('/cek-transaksi', requireLogin, (req, res) => {
+    const { code } = req.query;
+    if (!code) return res.redirect('/history');
+    const trx = transactions.find(t => t.code === code && t.userId === req.session.user.id);
+    res.json(trx ? { found: true, status: trx.status, code: trx.code } : { found: false });
 });
 
 // ─── REGISTER ─────────────────────────────────────────────────────────
@@ -187,10 +220,7 @@ app.post('/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // User pertama otomatis jadi admin
     const role = users.length === 0 ? 'admin' : 'user';
-
     users.push({ id: users.length + 1, username, email, password: hashedPassword, role, createdAt: new Date() });
 
     req.session.successMessage = 'Akun berhasil dibuat! Silakan login.';
@@ -221,7 +251,6 @@ app.post('/login', async (req, res) => {
 
     req.session.user = { id: user.id, username: user.username, email: user.email, role: user.role };
 
-    // Redirect admin ke dashboard
     if (user.role === 'admin') return res.redirect('/admin');
     res.redirect('/');
 });
@@ -251,10 +280,7 @@ app.get('/admin', requireAdmin, (req, res) => {
 });
 
 app.get('/admin/users', requireAdmin, (req, res) => {
-    res.render('admin/users', {
-        user: req.session.user,
-        users: [...users].reverse()
-    });
+    res.render('admin/users', { user: req.session.user, users: [...users].reverse() });
 });
 
 app.post('/admin/users/:id/delete', requireAdmin, (req, res) => {

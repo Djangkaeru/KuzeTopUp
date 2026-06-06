@@ -22,6 +22,9 @@
             </div>
             <div class="nav-auth">
                 <a href="/" class="btn-back"><i class="fas fa-arrow-left"></i> Kembali</a>
+                <a href="/history" class="btn-nav-login">
+                    <i class="fas fa-clock-rotate-left"></i> Riwayat
+                </a>
                 <div class="nav-user">
                     <i class="fas fa-circle-user"></i>
                     <span><%= user.username %></span>
@@ -200,6 +203,7 @@
     <script src="/js/script.js"></script>
     <script>
         const gameName = <%- JSON.stringify(game.name) %>;
+        const gameId   = <%- JSON.stringify(game.id) %>;
         let selectedPkg = null;
         let selectedPayment = null;
 
@@ -364,7 +368,7 @@
         }
 
         // ─── SUBMIT ORDER ─────────────────────────────────────────────────
-        function submitOrder() {
+        async function submitOrder() {
             // Validasi User ID dulu
             const userId = document.getElementById('userId').value.trim();
 
@@ -386,36 +390,69 @@
                 return;
             }
 
-            // Validasi nominal
             if (!selectedPkg) {
                 showToast('Pilih nominal dulu ya!');
                 return;
             }
 
-            // Validasi pembayaran
             if (!selectedPayment) {
                 showToast('Pilih metode pembayaran dulu!');
                 return;
             }
 
             const serverId = document.getElementById('serverId').value.trim();
-            const invoiceModal = document.getElementById('invoiceModal');
 
-            // Sanitasi sebelum ditampilkan ke invoice
-            document.getElementById('invoiceCode').textContent = generateTransactionCode();
-            document.getElementById('invoiceGame').textContent = gameName;
-            document.getElementById('invoiceNominal').textContent = selectedPkg.name;
-            document.getElementById('invoiceUserId').textContent = sanitize(userId);
-            document.getElementById('invoiceServerId').textContent = serverId ? sanitize(serverId) : 'Tidak ada';
-            document.getElementById('invoicePayment').textContent = selectedPayment;
-            document.getElementById('invoiceTotal').textContent = formatRupiah(selectedPkg.price);
+            // Disable tombol saat loading
+            const btnBuy = document.getElementById('btnBuy');
+            btnBuy.disabled = true;
+            btnBuy.textContent = 'Memproses...';
 
-            invoiceModal.hidden = false;
-            document.body.classList.add('modal-open');
+            try {
+                // Kirim transaksi ke server
+                const res = await fetch('/order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        gameId,
+                        nominal: selectedPkg.name,
+                        price: selectedPkg.price,
+                        gameUserId: userId,
+                        serverId: serverId || null,
+                        payment: selectedPayment
+                    })
+                });
 
-            setTimeout(() => {
-                invoiceModal.classList.add('is-open');
-            }, 10);
+                const data = await res.json();
+
+                if (!data.success) {
+                    showToast(data.error || 'Terjadi kesalahan, coba lagi!');
+                    btnBuy.disabled = false;
+                    updateBuyState();
+                    return;
+                }
+
+                // Tampilkan invoice dengan kode dari server
+                const invoiceModal = document.getElementById('invoiceModal');
+                document.getElementById('invoiceCode').textContent = data.code;
+                document.getElementById('invoiceGame').textContent = gameName;
+                document.getElementById('invoiceNominal').textContent = selectedPkg.name;
+                document.getElementById('invoiceUserId').textContent = sanitize(userId);
+                document.getElementById('invoiceServerId').textContent = serverId ? sanitize(serverId) : 'Tidak ada';
+                document.getElementById('invoicePayment').textContent = selectedPayment;
+                document.getElementById('invoiceTotal').textContent = formatRupiah(selectedPkg.price);
+
+                invoiceModal.hidden = false;
+                document.body.classList.add('modal-open');
+                setTimeout(() => invoiceModal.classList.add('is-open'), 10);
+
+                showToast('Pesanan berhasil dibuat!', 'success');
+
+            } catch (err) {
+                showToast('Gagal terhubung ke server!');
+            } finally {
+                btnBuy.disabled = false;
+                updateBuyState();
+            }
         }
 
         // ─── CLOSE INVOICE ────────────────────────────────────────────────
