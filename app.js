@@ -16,29 +16,30 @@ app.use(session({
     secret: 'kuzetopup-secret-key-2026',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 } // 1 hari
+    cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
 
-// ─── SIMPAN USER (sementara, nanti pindah ke MySQL) ───────────────────
-// Format: { id, username, email, password (hashed), createdAt }
+// ─── DATA SEMENTARA (nanti pindah ke MySQL) ───────────────────────────
 const users = [];
+const transactions = [];
 
-// ─── MIDDLEWARE CEK LOGIN ─────────────────────────────────────────────
+// ─── MIDDLEWARE ───────────────────────────────────────────────────────
 function requireLogin(req, res, next) {
-    if (!req.session.user) {
-        return res.redirect('/login');
-    }
+    if (!req.session.user) return res.redirect('/login');
+    next();
+}
+
+function requireAdmin(req, res, next) {
+    if (!req.session.user) return res.redirect('/login');
+    if (req.session.user.role !== 'admin') return res.redirect('/');
     next();
 }
 
 // ─── DATA GAME ────────────────────────────────────────────────────────
 const games = [
     {
-        id: 1,
-        name: 'Mobile Legends',
-        icon: '/images/ml.jpg',
-        category: 'MOBA',
-        badge: 'Populer',
+        id: 1, name: 'Mobile Legends', icon: '/images/ml.jpg',
+        category: 'MOBA', badge: 'Populer',
         packages: [
             { name: '86 Diamond', price: 19000, bonus: null },
             { name: '172 Diamond', price: 37000, bonus: '12 Diamond' },
@@ -49,11 +50,8 @@ const games = [
         ]
     },
     {
-        id: 2,
-        name: 'Free Fire',
-        icon: '/images/freefire.jpg',
-        category: 'Battle Royale',
-        badge: 'Hot',
+        id: 2, name: 'Free Fire', icon: '/images/freefire.jpg',
+        category: 'Battle Royale', badge: 'Hot',
         packages: [
             { name: '70 Diamond', price: 15000, bonus: null },
             { name: '140 Diamond', price: 29000, bonus: null },
@@ -63,11 +61,8 @@ const games = [
         ]
     },
     {
-        id: 3,
-        name: 'PUBG Mobile',
-        icon: '/images/pubg.jpg',
-        category: 'Battle Royale',
-        badge: null,
+        id: 3, name: 'PUBG Mobile', icon: '/images/pubg.jpg',
+        category: 'Battle Royale', badge: null,
         packages: [
             { name: '60 UC', price: 14000, bonus: null },
             { name: '325 UC', price: 69000, bonus: null },
@@ -76,11 +71,8 @@ const games = [
         ]
     },
     {
-        id: 4,
-        name: 'Genshin Impact',
-        icon: '/images/genshin.jpg',
-        category: 'RPG',
-        badge: 'Baru',
+        id: 4, name: 'Genshin Impact', icon: '/images/genshin.jpg',
+        category: 'RPG', badge: 'Baru',
         packages: [
             { name: '60 Genesis Crystal', price: 15000, bonus: null },
             { name: '300 Genesis Crystal', price: 69000, bonus: '30 Crystal' },
@@ -89,11 +81,8 @@ const games = [
         ]
     },
     {
-        id: 5,
-        name: 'Valorant',
-        icon: '/images/valo.jpg',
-        category: 'FPS',
-        badge: null,
+        id: 5, name: 'Valorant', icon: '/images/valo.jpg',
+        category: 'FPS', badge: null,
         packages: [
             { name: '475 VP', price: 49000, bonus: null },
             { name: '1000 VP', price: 99000, bonus: null },
@@ -102,11 +91,8 @@ const games = [
         ]
     },
     {
-        id: 6,
-        name: 'Clash of Clans',
-        icon: '/images/coc.jpg',
-        category: 'Strategy',
-        badge: null,
+        id: 6, name: 'Clash of Clans', icon: '/images/coc.jpg',
+        category: 'Strategy', badge: null,
         packages: [
             { name: '80 Gems', price: 13000, bonus: null },
             { name: '500 Gems', price: 75000, bonus: null },
@@ -125,6 +111,17 @@ const paymentMethods = [
     { name: 'Bank Transfer', description: 'BCA, BRI, Mandiri, BNI', icon: 'fa-building-columns' }
 ];
 
+// ─── HELPER ───────────────────────────────────────────────────────────
+function generateTransactionCode() {
+    const now = new Date();
+    const datePart = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0')
+    ].join('');
+    return `KZ-${datePart}-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
 // ─── ROUTES UTAMA ─────────────────────────────────────────────────────
 app.get('/', (req, res) => {
     res.render('index', { games, user: req.session.user || null });
@@ -136,6 +133,32 @@ app.get('/game/:id', requireLogin, (req, res) => {
     res.render('game', { game, paymentMethods, user: req.session.user });
 });
 
+// ─── SIMPAN TRANSAKSI (dari form order) ──────────────────────────────
+app.post('/order', requireLogin, (req, res) => {
+    const { gameId, nominal, price, userId: gameUserId, serverId, payment } = req.body;
+
+    const game = games.find(g => g.id === parseInt(gameId));
+    if (!game) return res.status(400).json({ error: 'Game tidak ditemukan' });
+
+    const transaction = {
+        id: transactions.length + 1,
+        code: generateTransactionCode(),
+        username: req.session.user.username,
+        userId: req.session.user.id,
+        game: game.name,
+        nominal,
+        userId: gameUserId,
+        serverId: serverId || null,
+        payment,
+        total: parseInt(price),
+        status: 'pending',
+        createdAt: new Date()
+    };
+
+    transactions.push(transaction);
+    res.json({ success: true, code: transaction.code });
+});
+
 // ─── REGISTER ─────────────────────────────────────────────────────────
 app.get('/register', (req, res) => {
     if (req.session.user) return res.redirect('/');
@@ -145,50 +168,31 @@ app.get('/register', (req, res) => {
 app.post('/register', async (req, res) => {
     const { username, email, password, confirmPassword } = req.body;
 
-    // Validasi server-side
-    if (!username || !email || !password || !confirmPassword) {
+    if (!username || !email || !password || !confirmPassword)
         return res.render('register', { error: 'Semua field wajib diisi!' });
-    }
-
-    if (username.length < 3 || username.length > 20) {
+    if (username.length < 3 || username.length > 20)
         return res.render('register', { error: 'Username harus 3–20 karakter!' });
-    }
-
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    if (!/^[a-zA-Z0-9_]+$/.test(username))
         return res.render('register', { error: 'Username hanya boleh huruf, angka, dan _' });
-    }
-
-    if (password.length < 6) {
+    if (password.length < 6)
         return res.render('register', { error: 'Password minimal 6 karakter!' });
-    }
-
-    if (password !== confirmPassword) {
+    if (password !== confirmPassword)
         return res.render('register', { error: 'Password dan konfirmasi tidak cocok!' });
+
+    const existing = users.find(u => u.username === username || u.email === email);
+    if (existing) {
+        return res.render('register', {
+            error: existing.username === username ? 'Username sudah dipakai!' : 'Email sudah terdaftar!'
+        });
     }
 
-    // Cek username/email sudah dipakai
-    const existingUser = users.find(u => u.username === username || u.email === email);
-    if (existingUser) {
-        if (existingUser.username === username) {
-            return res.render('register', { error: 'Username sudah dipakai!' });
-        }
-        return res.render('register', { error: 'Email sudah terdaftar!' });
-    }
-
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Simpan user baru
-    const newUser = {
-        id: users.length + 1,
-        username,
-        email,
-        password: hashedPassword,
-        createdAt: new Date()
-    };
-    users.push(newUser);
+    // User pertama otomatis jadi admin
+    const role = users.length === 0 ? 'admin' : 'user';
 
-    // Redirect ke login dengan pesan sukses
+    users.push({ id: users.length + 1, username, email, password: hashedPassword, role, createdAt: new Date() });
+
     req.session.successMessage = 'Akun berhasil dibuat! Silakan login.';
     res.redirect('/login');
 });
@@ -204,37 +208,80 @@ app.get('/login', (req, res) => {
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
-    if (!username || !password) {
+    if (!username || !password)
         return res.render('login', { error: 'Username dan password wajib diisi!', success: null });
-    }
 
-    // Cari user
     const user = users.find(u => u.username === username);
-    if (!user) {
+    if (!user)
         return res.render('login', { error: 'Username atau password salah!', success: null });
-    }
 
-    // Cek password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    if (!isMatch)
         return res.render('login', { error: 'Username atau password salah!', success: null });
-    }
 
-    // Simpan ke session (tanpa password)
-    req.session.user = {
-        id: user.id,
-        username: user.username,
-        email: user.email
-    };
+    req.session.user = { id: user.id, username: user.username, email: user.email, role: user.role };
 
+    // Redirect admin ke dashboard
+    if (user.role === 'admin') return res.redirect('/admin');
     res.redirect('/');
 });
 
 // ─── LOGOUT ───────────────────────────────────────────────────────────
 app.post('/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/login');
+    req.session.destroy(() => res.redirect('/login'));
+});
+
+// ─── ADMIN ROUTES ─────────────────────────────────────────────────────
+app.get('/admin', requireAdmin, (req, res) => {
+    const totalRevenue = transactions
+        .filter(t => t.status === 'success')
+        .reduce((sum, t) => sum + t.total, 0);
+
+    res.render('admin/dashboard', {
+        user: req.session.user,
+        stats: {
+            totalUsers: users.length,
+            totalTransactions: transactions.length,
+            totalGames: games.length,
+            totalRevenue
+        },
+        recentTransactions: [...transactions].reverse().slice(0, 5),
+        recentUsers: [...users].reverse().slice(0, 5)
     });
+});
+
+app.get('/admin/users', requireAdmin, (req, res) => {
+    res.render('admin/users', {
+        user: req.session.user,
+        users: [...users].reverse()
+    });
+});
+
+app.post('/admin/users/:id/delete', requireAdmin, (req, res) => {
+    const id = parseInt(req.params.id);
+    if (id === req.session.user.id) return res.redirect('/admin/users');
+    const idx = users.findIndex(u => u.id === id);
+    if (idx !== -1) users.splice(idx, 1);
+    res.redirect('/admin/users');
+});
+
+app.get('/admin/transactions', requireAdmin, (req, res) => {
+    res.render('admin/transactions', {
+        user: req.session.user,
+        transactions: [...transactions].reverse()
+    });
+});
+
+app.post('/admin/transactions/:id/status', requireAdmin, (req, res) => {
+    const id = parseInt(req.params.id);
+    const { status } = req.body;
+    const t = transactions.find(t => t.id === id);
+    if (t && ['pending', 'success', 'failed'].includes(status)) t.status = status;
+    res.redirect('/admin/transactions');
+});
+
+app.get('/admin/games', requireAdmin, (req, res) => {
+    res.render('admin/games', { user: req.session.user, games });
 });
 
 // ─── START SERVER ─────────────────────────────────────────────────────
