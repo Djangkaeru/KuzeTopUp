@@ -26,41 +26,35 @@
 
             <ul class="nav-links">
                 <li>
-                    <a href="#home"
-                    onclick="event.preventDefault();
-                    document.querySelector('#home')
-                    .scrollIntoView({behavior:'smooth'})">
-                        Home
-                    </a>
+                    <a href="#home" onclick="event.preventDefault();document.querySelector('#home').scrollIntoView({behavior:'smooth'})">Home</a>
                 </li>
-
                 <li>
-                    <a href="#games"
-                    onclick="event.preventDefault();
-                    document.querySelector('#games')
-                    .scrollIntoView({behavior:'smooth'})">
-                        Games
-                    </a>
+                    <a href="#games" onclick="event.preventDefault();document.querySelector('#games').scrollIntoView({behavior:'smooth'})">Games</a>
                 </li>
-
                 <li>
-                    <a href="#cara-order"
-                    onclick="event.preventDefault();
-                    document.querySelector('#cara-order')
-                    .scrollIntoView({behavior:'smooth'})">
-                        Cara Order
-                    </a>
+                    <a href="#cara-order" onclick="event.preventDefault();document.querySelector('#cara-order').scrollIntoView({behavior:'smooth'})">Cara Order</a>
                 </li>
-
                 <li>
-                    <a href="#kontak"
-                    onclick="event.preventDefault();
-                    document.querySelector('#kontak')
-                    .scrollIntoView({behavior:'smooth'})">
-                        Kontak
-                    </a>
+                    <a href="#kontak" onclick="event.preventDefault();document.querySelector('#kontak').scrollIntoView({behavior:'smooth'})">Kontak</a>
                 </li>
             </ul>
+
+            <div class="nav-auth">
+                <% if (user) { %>
+                    <div class="nav-user">
+                        <i class="fas fa-circle-user"></i>
+                        <span><%= user.username %></span>
+                    </div>
+                    <form action="/logout" method="POST" style="margin:0">
+                        <button type="submit" class="btn-logout">
+                            <i class="fas fa-right-from-bracket"></i> Logout
+                        </button>
+                    </form>
+                <% } else { %>
+                    <a href="/login" class="btn-nav-login">Login</a>
+                    <a href="/register" class="btn-nav-register">Daftar</a>
+                <% } %>
+            </div>
 
         </div>
     </nav>
