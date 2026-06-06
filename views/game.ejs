@@ -10,6 +10,9 @@
 </head>
 <body>
 
+    <!-- TOAST NOTIFICATION -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
     <!-- NAVBAR -->
     <nav class="navbar">
         <div class="nav-container">
@@ -35,8 +38,28 @@
         <div class="form-id">
             <h2>Masukkan ID Game</h2>
             <div class="input-group">
-                <input type="text" id="userId" placeholder="Masukkan User ID">
-                <input type="text" id="serverId" placeholder="Server ID (jika ada)">
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        id="userId"
+                        placeholder="Masukkan User ID"
+                        maxlength="20"
+                        autocomplete="off"
+                        oninput="validateUserId()"
+                    >
+                    <span class="input-error" id="userIdError"></span>
+                </div>
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        id="serverId"
+                        placeholder="Server ID (jika ada)"
+                        maxlength="10"
+                        autocomplete="off"
+                        oninput="validateServerId()"
+                    >
+                    <span class="input-error" id="serverIdError"></span>
+                </div>
             </div>
         </div>
 
@@ -87,9 +110,70 @@
                 <p>Nominal: <span id="selectedName"></span> - <strong id="selectedPrice"></strong></p>
                 <p>Pembayaran: <span id="selectedPayment">Belum dipilih</span></p>
             </div>
-            <button class="btn-buy" id="btnBuy" onclick="submitOrder()">Lengkapi Order</button>
+            <button class="btn-buy" id="btnBuy" onclick="submitOrder()">Pilih Nominal Dulu</button>
         </div>
     </section>
+
+    <!-- INVOICE -->
+    <div class="invoice-modal" id="invoiceModal" role="dialog" aria-modal="true" aria-labelledby="invoiceTitle" hidden>
+        <div class="invoice-dialog">
+            <div class="invoice-header">
+                <div>
+                    <p class="invoice-label">Invoice</p>
+                    <h2 id="invoiceTitle">Pesanan Dibuat</h2>
+                </div>
+                <button type="button" class="invoice-close" onclick="closeInvoice()" aria-label="Tutup invoice">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="invoice-status">
+                <i class="fas fa-clock"></i>
+                <span>Menunggu Pembayaran</span>
+            </div>
+
+            <div class="invoice-code">
+                <span>Kode Transaksi</span>
+                <strong id="invoiceCode">-</strong>
+            </div>
+
+            <div class="invoice-list">
+                <div>
+                    <span>Game</span>
+                    <strong id="invoiceGame">-</strong>
+                </div>
+                <div>
+                    <span>Nominal</span>
+                    <strong id="invoiceNominal">-</strong>
+                </div>
+                <div>
+                    <span>User ID</span>
+                    <strong id="invoiceUserId">-</strong>
+                </div>
+                <div>
+                    <span>Server ID</span>
+                    <strong id="invoiceServerId">-</strong>
+                </div>
+                <div>
+                    <span>Pembayaran</span>
+                    <strong id="invoicePayment">-</strong>
+                </div>
+                <div class="invoice-total">
+                    <span>Total</span>
+                    <strong id="invoiceTotal">-</strong>
+                </div>
+            </div>
+
+            <div class="invoice-actions">
+                <button type="button" class="btn-invoice-secondary" onclick="closeInvoice()">
+                    Tutup
+                </button>
+                <button type="button" class="btn-invoice-primary" onclick="resetOrder()">
+                    Pesan Lagi
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- FOOTER -->
     <footer class="footer">
@@ -104,9 +188,128 @@
 
     <script src="/js/script.js"></script>
     <script>
+        const gameName = <%- JSON.stringify(game.name) %>;
         let selectedPkg = null;
         let selectedPayment = null;
 
+        // ─── TOAST NOTIFICATION ───────────────────────────────────────────
+        function showToast(message, type = 'error') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const icon = type === 'error' ? 'fa-circle-xmark'
+                       : type === 'success' ? 'fa-circle-check'
+                       : 'fa-circle-info';
+
+            toast.innerHTML = `<i class="fas ${icon}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            // animasi masuk
+            requestAnimationFrame(() => toast.classList.add('toast-show'));
+
+            // hapus setelah 3 detik
+            setTimeout(() => {
+                toast.classList.remove('toast-show');
+                setTimeout(() => toast.remove(), 350);
+            }, 3000);
+        }
+
+        // ─── FORMAT ───────────────────────────────────────────────────────
+        function formatRupiah(value) {
+            return 'Rp ' + value.toLocaleString('id-ID');
+        }
+
+        function generateTransactionCode() {
+            const now = new Date();
+            const datePart = [
+                now.getFullYear(),
+                String(now.getMonth() + 1).padStart(2, '0'),
+                String(now.getDate()).padStart(2, '0')
+            ].join('');
+            const randomPart = Math.floor(1000 + Math.random() * 9000);
+            return `KZ-${datePart}-${randomPart}`;
+        }
+
+        // ─── SANITASI ─────────────────────────────────────────────────────
+        // Hapus karakter berbahaya (XSS protection)
+        function sanitize(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#x27;');
+        }
+
+        // ─── VALIDASI USER ID ─────────────────────────────────────────────
+        function validateUserId() {
+            const input = document.getElementById('userId');
+            const errorEl = document.getElementById('userIdError');
+            const value = input.value.trim();
+
+            // Hanya boleh huruf, angka, underscore, strip
+            const validPattern = /^[a-zA-Z0-9_-]*$/;
+
+            if (value === '') {
+                setInputState(input, errorEl, 'default', '');
+                return false;
+            }
+
+            if (!validPattern.test(value)) {
+                setInputState(input, errorEl, 'error', 'Hanya boleh huruf, angka, _ dan -');
+                return false;
+            }
+
+            if (value.length < 3) {
+                setInputState(input, errorEl, 'error', 'Minimal 3 karakter');
+                return false;
+            }
+
+            setInputState(input, errorEl, 'success', '');
+            return true;
+        }
+
+        // ─── VALIDASI SERVER ID ───────────────────────────────────────────
+        function validateServerId() {
+            const input = document.getElementById('serverId');
+            const errorEl = document.getElementById('serverIdError');
+            const value = input.value.trim();
+
+            // Server ID boleh kosong
+            if (value === '') {
+                setInputState(input, errorEl, 'default', '');
+                return true;
+            }
+
+            // Hanya boleh angka
+            const validPattern = /^[0-9]*$/;
+            if (!validPattern.test(value)) {
+                setInputState(input, errorEl, 'error', 'Server ID hanya boleh angka');
+                return false;
+            }
+
+            setInputState(input, errorEl, 'success', '');
+            return true;
+        }
+
+        // ─── SET STATE INPUT ──────────────────────────────────────────────
+        function setInputState(input, errorEl, state, message) {
+            input.classList.remove('input-valid', 'input-error-border');
+            errorEl.textContent = message;
+
+            if (state === 'error') {
+                input.classList.add('input-error-border');
+                errorEl.style.display = 'block';
+            } else if (state === 'success') {
+                input.classList.add('input-valid');
+                errorEl.style.display = 'none';
+            } else {
+                errorEl.style.display = 'none';
+            }
+        }
+
+        // ─── UPDATE TOMBOL BELI ───────────────────────────────────────────
         function updateBuyState() {
             const btnBuy = document.getElementById('btnBuy');
             const selectedInfo = document.getElementById('selectedInfo');
@@ -123,16 +326,18 @@
             btnBuy.textContent = selectedPkg ? 'Pilih Pembayaran' : 'Pilih Nominal Dulu';
         }
 
+        // ─── SELECT NOMINAL ───────────────────────────────────────────────
         function selectNominal(el, name, price) {
             document.querySelectorAll('.nominal-card').forEach(card => card.classList.remove('selected'));
             el.classList.add('selected');
             selectedPkg = { name, price };
 
             document.getElementById('selectedName').textContent = name;
-            document.getElementById('selectedPrice').textContent = 'Rp ' + price.toLocaleString('id-ID');
+            document.getElementById('selectedPrice').textContent = formatRupiah(price);
             updateBuyState();
         }
 
+        // ─── SELECT PAYMENT ───────────────────────────────────────────────
         function selectPayment(el) {
             document.querySelectorAll('.payment-card').forEach(card => {
                 card.classList.remove('selected');
@@ -147,28 +352,105 @@
             updateBuyState();
         }
 
+        // ─── SUBMIT ORDER ─────────────────────────────────────────────────
         function submitOrder() {
-            if (!selectedPkg) {
-                alert('Pilih nominal dulu ya!');
-                return;
-            }
-
-            if (!selectedPayment) {
-                alert('Pilih metode pembayaran dulu!');
-                return;
-            }
-
+            // Validasi User ID dulu
             const userId = document.getElementById('userId').value.trim();
+
             if (!userId) {
-                alert('Masukkan User ID dulu!');
+                document.getElementById('userId').focus();
+                showToast('Masukkan User ID dulu!');
+                return;
+            }
+
+            if (!validateUserId()) {
+                document.getElementById('userId').focus();
+                showToast('User ID tidak valid!');
+                return;
+            }
+
+            if (!validateServerId()) {
+                document.getElementById('serverId').focus();
+                showToast('Format Server ID salah!');
+                return;
+            }
+
+            // Validasi nominal
+            if (!selectedPkg) {
+                showToast('Pilih nominal dulu ya!');
+                return;
+            }
+
+            // Validasi pembayaran
+            if (!selectedPayment) {
+                showToast('Pilih metode pembayaran dulu!');
                 return;
             }
 
             const serverId = document.getElementById('serverId').value.trim();
-            const serverInfo = serverId ? `\nServer ID: ${serverId}` : '';
+            const invoiceModal = document.getElementById('invoiceModal');
 
-            alert(`Pesanan berhasil!\n\nGame: <%= game.name %>\nNominal: ${selectedPkg.name}\nUser ID: ${userId}${serverInfo}\nPembayaran: ${selectedPayment}\nTotal: Rp ${selectedPkg.price.toLocaleString('id-ID')}\n\nTerima kasih sudah order di KuzeTopUp!`);
+            // Sanitasi sebelum ditampilkan ke invoice
+            document.getElementById('invoiceCode').textContent = generateTransactionCode();
+            document.getElementById('invoiceGame').textContent = gameName;
+            document.getElementById('invoiceNominal').textContent = selectedPkg.name;
+            document.getElementById('invoiceUserId').textContent = sanitize(userId);
+            document.getElementById('invoiceServerId').textContent = serverId ? sanitize(serverId) : 'Tidak ada';
+            document.getElementById('invoicePayment').textContent = selectedPayment;
+            document.getElementById('invoiceTotal').textContent = formatRupiah(selectedPkg.price);
+
+            invoiceModal.hidden = false;
+            document.body.classList.add('modal-open');
+
+            setTimeout(() => {
+                invoiceModal.classList.add('is-open');
+            }, 10);
         }
+
+        // ─── CLOSE INVOICE ────────────────────────────────────────────────
+        function closeInvoice() {
+            const invoiceModal = document.getElementById('invoiceModal');
+            invoiceModal.classList.remove('is-open');
+            document.body.classList.remove('modal-open');
+
+            setTimeout(() => {
+                invoiceModal.hidden = true;
+            }, 200);
+        }
+
+        // ─── RESET ORDER ──────────────────────────────────────────────────
+        function resetOrder() {
+            closeInvoice();
+
+            selectedPkg = null;
+            selectedPayment = null;
+
+            const userIdInput = document.getElementById('userId');
+            const serverIdInput = document.getElementById('serverId');
+
+            userIdInput.value = '';
+            serverIdInput.value = '';
+
+            // Reset state visual input
+            setInputState(userIdInput, document.getElementById('userIdError'), 'default', '');
+            setInputState(serverIdInput, document.getElementById('serverIdError'), 'default', '');
+
+            document.getElementById('selectedPayment').textContent = 'Belum dipilih';
+            document.querySelectorAll('.nominal-card, .payment-card').forEach(card => {
+                card.classList.remove('selected');
+                card.setAttribute('aria-pressed', 'false');
+            });
+
+            updateBuyState(); // ← fix bug lama: info bar sekarang ikut reset
+        }
+
+        // ─── KEYBOARD ESC ─────────────────────────────────────────────────
+        document.addEventListener('keydown', event => {
+            const invoiceModal = document.getElementById('invoiceModal');
+            if (event.key === 'Escape' && !invoiceModal.hidden) {
+                closeInvoice();
+            }
+        });
     </script>
 </body>
 </html>
