@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const db = require('./db');
 
 const app = express();
 
@@ -18,10 +19,6 @@ app.use(session({
     saveUninitialized: false,
     cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
-
-// ─── DATA SEMENTARA (nanti pindah ke MySQL) ───────────────────────────
-const users = [];
-const transactions = [];
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────
 function requireLogin(req, res, next) {
@@ -133,18 +130,15 @@ app.get('/game/:id', requireLogin, (req, res) => {
     res.render('game', { game, paymentMethods, user: req.session.user });
 });
 
-// ─── ORDER (simpan transaksi) ─────────────────────────────────────────
-app.post('/order', requireLogin, (req, res) => {
+// ─── ORDER ────────────────────────────────────────────────────────────
+app.post('/order', requireLogin, async (req, res) => {
     const { gameId, nominal, price, gameUserId, serverId, payment } = req.body;
 
-    // Validasi server-side
-    if (!gameId || !nominal || !price || !gameUserId || !payment) {
+    if (!gameId || !nominal || !price || !gameUserId || !payment)
         return res.json({ success: false, error: 'Data tidak lengkap!' });
-    }
 
-    if (!gameUserId.trim() || gameUserId.trim().length < 3) {
+    if (!gameUserId.trim() || gameUserId.trim().length < 3)
         return res.json({ success: false, error: 'User ID game tidak valid!' });
-    }
 
     const game = games.find(g => g.id === parseInt(gameId));
     if (!game) return res.json({ success: false, error: 'Game tidak ditemukan!' });
@@ -152,44 +146,35 @@ app.post('/order', requireLogin, (req, res) => {
     const pkg = game.packages.find(p => p.name === nominal);
     if (!pkg) return res.json({ success: false, error: 'Paket tidak ditemukan!' });
 
-    // Cegah manipulasi harga dari client
-    if (pkg.price !== parseInt(price)) {
+    if (pkg.price !== parseInt(price))
         return res.json({ success: false, error: 'Harga tidak valid!' });
+
+    try {
+        const code = generateTransactionCode();
+        await db.execute(
+            `INSERT INTO transactions (code, user_id, game, nominal, game_user_id, server_id, payment, total, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+            [code, req.session.user.id, game.name, nominal, gameUserId.trim(), serverId || null, payment, pkg.price]
+        );
+        res.json({ success: true, code });
+    } catch (err) {
+        console.error('Order error:', err);
+        res.json({ success: false, error: 'Gagal menyimpan transaksi!' });
     }
-
-    const transaction = {
-        id: transactions.length + 1,
-        code: generateTransactionCode(),
-        userId: req.session.user.id,
-        username: req.session.user.username,
-        game: game.name,
-        nominal,
-        gameUserId: gameUserId.trim(),
-        serverId: serverId || null,
-        payment,
-        total: pkg.price,
-        status: 'pending',
-        createdAt: new Date()
-    };
-
-    transactions.push(transaction);
-    res.json({ success: true, code: transaction.code });
 });
 
 // ─── RIWAYAT TRANSAKSI USER ───────────────────────────────────────────
-app.get('/history', requireLogin, (req, res) => {
-    const userTransactions = transactions
-        .filter(t => t.userId === req.session.user.id)
-        .reverse();
-    res.render('history', { user: req.session.user, transactions: userTransactions });
-});
-
-// ─── CEK STATUS TRANSAKSI ─────────────────────────────────────────────
-app.get('/cek-transaksi', requireLogin, (req, res) => {
-    const { code } = req.query;
-    if (!code) return res.redirect('/history');
-    const trx = transactions.find(t => t.code === code && t.userId === req.session.user.id);
-    res.json(trx ? { found: true, status: trx.status, code: trx.code } : { found: false });
+app.get('/history', requireLogin, async (req, res) => {
+    try {
+        const [rows] = await db.execute(
+            `SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC`,
+            [req.session.user.id]
+        );
+        res.render('history', { user: req.session.user, transactions: rows });
+    } catch (err) {
+        console.error(err);
+        res.render('history', { user: req.session.user, transactions: [] });
+    }
 });
 
 // ─── REGISTER ─────────────────────────────────────────────────────────
@@ -212,19 +197,39 @@ app.post('/register', async (req, res) => {
     if (password !== confirmPassword)
         return res.render('register', { error: 'Password dan konfirmasi tidak cocok!' });
 
-    const existing = users.find(u => u.username === username || u.email === email);
-    if (existing) {
-        return res.render('register', {
-            error: existing.username === username ? 'Username sudah dipakai!' : 'Email sudah terdaftar!'
-        });
+    try {
+        // Cek apakah sudah ada user sama sekali (untuk admin pertama)
+        const [countRows] = await db.execute('SELECT COUNT(*) as total FROM users');
+        const isFirst = countRows[0].total === 0;
+
+        // Cek username & email duplikat
+        const [existing] = await db.execute(
+            'SELECT username, email FROM users WHERE username = ? OR email = ?',
+            [username, email]
+        );
+
+        if (existing.length > 0) {
+            const taken = existing[0];
+            return res.render('register', {
+                error: taken.username === username ? 'Username sudah dipakai!' : 'Email sudah terdaftar!'
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const role = isFirst ? 'admin' : 'user';
+
+        await db.execute(
+            'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)',
+            [username, email, hashedPassword, role]
+        );
+
+        req.session.successMessage = 'Akun berhasil dibuat! Silakan login.';
+        res.redirect('/login');
+
+    } catch (err) {
+        console.error('Register error:', err);
+        res.render('register', { error: 'Terjadi kesalahan, coba lagi!' });
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const role = users.length === 0 ? 'admin' : 'user';
-    users.push({ id: users.length + 1, username, email, password: hashedPassword, role, createdAt: new Date() });
-
-    req.session.successMessage = 'Akun berhasil dibuat! Silakan login.';
-    res.redirect('/login');
 });
 
 // ─── LOGIN ────────────────────────────────────────────────────────────
@@ -241,18 +246,34 @@ app.post('/login', async (req, res) => {
     if (!username || !password)
         return res.render('login', { error: 'Username dan password wajib diisi!', success: null });
 
-    const user = users.find(u => u.username === username);
-    if (!user)
-        return res.render('login', { error: 'Username atau password salah!', success: null });
+    try {
+        const [rows] = await db.execute(
+            'SELECT * FROM users WHERE username = ?', [username]
+        );
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-        return res.render('login', { error: 'Username atau password salah!', success: null });
+        if (rows.length === 0)
+            return res.render('login', { error: 'Username atau password salah!', success: null });
 
-    req.session.user = { id: user.id, username: user.username, email: user.email, role: user.role };
+        const user = rows[0];
+        const isMatch = await bcrypt.compare(password, user.password);
 
-    if (user.role === 'admin') return res.redirect('/admin');
-    res.redirect('/');
+        if (!isMatch)
+            return res.render('login', { error: 'Username atau password salah!', success: null });
+
+        req.session.user = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        };
+
+        if (user.role === 'admin') return res.redirect('/admin');
+        res.redirect('/');
+
+    } catch (err) {
+        console.error('Login error:', err);
+        res.render('login', { error: 'Terjadi kesalahan, coba lagi!', success: null });
+    }
 });
 
 // ─── LOGOUT ───────────────────────────────────────────────────────────
@@ -260,52 +281,87 @@ app.post('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/login'));
 });
 
-// ─── ADMIN ROUTES ─────────────────────────────────────────────────────
-app.get('/admin', requireAdmin, (req, res) => {
-    const totalRevenue = transactions
-        .filter(t => t.status === 'success')
-        .reduce((sum, t) => sum + t.total, 0);
+// ─── ADMIN: DASHBOARD ─────────────────────────────────────────────────
+app.get('/admin', requireAdmin, async (req, res) => {
+    try {
+        const [[{ totalUsers }]] = await db.execute('SELECT COUNT(*) as totalUsers FROM users');
+        const [[{ totalTransactions }]] = await db.execute('SELECT COUNT(*) as totalTransactions FROM transactions');
+        const [[{ totalRevenue }]] = await db.execute(
+            "SELECT COALESCE(SUM(total), 0) as totalRevenue FROM transactions WHERE status = 'success'"
+        );
+        const [recentTransactions] = await db.execute(
+            `SELECT t.*, u.username FROM transactions t
+             JOIN users u ON t.user_id = u.id
+             ORDER BY t.created_at DESC LIMIT 5`
+        );
+        const [recentUsers] = await db.execute(
+            'SELECT id, username, email, role, created_at FROM users ORDER BY created_at DESC LIMIT 5'
+        );
 
-    res.render('admin/dashboard', {
-        user: req.session.user,
-        stats: {
-            totalUsers: users.length,
-            totalTransactions: transactions.length,
-            totalGames: games.length,
-            totalRevenue
-        },
-        recentTransactions: [...transactions].reverse().slice(0, 5),
-        recentUsers: [...users].reverse().slice(0, 5)
-    });
+        res.render('admin/dashboard', {
+            user: req.session.user,
+            stats: { totalUsers, totalTransactions, totalGames: games.length, totalRevenue },
+            recentTransactions,
+            recentUsers
+        });
+    } catch (err) {
+        console.error(err);
+        res.redirect('/');
+    }
 });
 
-app.get('/admin/users', requireAdmin, (req, res) => {
-    res.render('admin/users', { user: req.session.user, users: [...users].reverse() });
+// ─── ADMIN: USERS ─────────────────────────────────────────────────────
+app.get('/admin/users', requireAdmin, async (req, res) => {
+    try {
+        const [rows] = await db.execute(
+            'SELECT id, username, email, role, created_at FROM users ORDER BY created_at DESC'
+        );
+        res.render('admin/users', { user: req.session.user, users: rows });
+    } catch (err) {
+        console.error(err);
+        res.redirect('/admin');
+    }
 });
 
-app.post('/admin/users/:id/delete', requireAdmin, (req, res) => {
+app.post('/admin/users/:id/delete', requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (id === req.session.user.id) return res.redirect('/admin/users');
-    const idx = users.findIndex(u => u.id === id);
-    if (idx !== -1) users.splice(idx, 1);
+    try {
+        await db.execute('DELETE FROM users WHERE id = ?', [id]);
+    } catch (err) {
+        console.error(err);
+    }
     res.redirect('/admin/users');
 });
 
-app.get('/admin/transactions', requireAdmin, (req, res) => {
-    res.render('admin/transactions', {
-        user: req.session.user,
-        transactions: [...transactions].reverse()
-    });
+// ─── ADMIN: TRANSACTIONS ──────────────────────────────────────────────
+app.get('/admin/transactions', requireAdmin, async (req, res) => {
+    try {
+        const [rows] = await db.execute(
+            `SELECT t.*, u.username FROM transactions t
+             JOIN users u ON t.user_id = u.id
+             ORDER BY t.created_at DESC`
+        );
+        res.render('admin/transactions', { user: req.session.user, transactions: rows });
+    } catch (err) {
+        console.error(err);
+        res.redirect('/admin');
+    }
 });
 
-app.post('/admin/transactions/:id/status', requireAdmin, (req, res) => {
+app.post('/admin/transactions/:id/status', requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     const { status } = req.body;
-    const t = transactions.find(t => t.id === id);
-    if (t && ['pending', 'success', 'failed'].includes(status)) t.status = status;
+    if (!['pending', 'success', 'failed'].includes(status)) return res.redirect('/admin/transactions');
+    try {
+        await db.execute('UPDATE transactions SET status = ? WHERE id = ?', [status, id]);
+    } catch (err) {
+        console.error(err);
+    }
     res.redirect('/admin/transactions');
 });
 
+// ─── ADMIN: GAMES ─────────────────────────────────────────────────────
 app.get('/admin/games', requireAdmin, (req, res) => {
     res.render('admin/games', { user: req.session.user, games });
 });
