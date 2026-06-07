@@ -1,5 +1,6 @@
 const express = require('express');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const db = require('./db');
@@ -12,11 +13,22 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ─── SESSION ──────────────────────────────────────────────────────────
+// ─── SESSION STORE (MySQL) ────────────────────────────────────────────
+const sessionStore = new MySQLStore({
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'kuzetopup',
+    clearExpired: true,
+    checkExpirationInterval: 1000 * 60 * 15,  // cek tiap 15 menit
+    expiration: 1000 * 60 * 60 * 24            // session expire 1 hari
+});
+
 app.use(session({
     secret: 'kuzetopup-secret-key-2026',
     resave: false,
     saveUninitialized: false,
+    store: sessionStore,
     cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
 
