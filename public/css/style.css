@@ -1820,3 +1820,361 @@ body.modal-open {
         gap: 10px;
     }
 }
+
+/* ─── PAYMENT PAGE ────────────────────────────────────────────────────── */
+.payment-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 100px 20px 60px;
+    min-height: 100vh;
+}
+
+.payment-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.payment-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(251,191,36,0.12);
+    border: 1px solid rgba(251,191,36,0.3);
+    color: #fbbf24;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.payment-header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.payment-header p { color: #888; font-size: 0.9rem; margin-bottom: 16px; }
+
+.payment-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,101,132,0.1);
+    border: 1px solid rgba(255,101,132,0.25);
+    color: var(--secondary);
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.payment-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 24px;
+    align-items: start;
+}
+
+/* ─── DETAIL CARD ────────────────────────────────────────────────────── */
+.payment-detail-card,
+.payment-instruction-card {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.payment-detail-card h3,
+.payment-instruction-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.payment-detail-card h3 i { color: var(--primary); }
+.payment-instruction-card h3 i { color: var(--accent); }
+
+.payment-detail-list { display: flex; flex-direction: column; gap: 0; }
+
+.payment-detail-list > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    gap: 12px;
+}
+
+.payment-detail-list > div:last-child { border-bottom: none; }
+
+.payment-detail-list span {
+    color: #666;
+    font-size: 0.83rem;
+    flex-shrink: 0;
+}
+
+.payment-detail-list strong {
+    color: #ddd;
+    font-size: 0.88rem;
+    text-align: right;
+}
+
+.payment-detail-list code {
+    background: rgba(108,99,255,0.12);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+}
+
+.payment-total-row {
+    background: rgba(108,99,255,0.06);
+    margin: 0 -24px;
+    padding: 14px 24px !important;
+    border-radius: 0 0 12px 12px;
+}
+
+.payment-total-row strong {
+    color: var(--accent) !important;
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+}
+
+/* ─── PAYMENT METHOD INFO ────────────────────────────────────────────── */
+.payment-method-info { display: flex; flex-direction: column; gap: 20px; }
+
+.qris-box { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+.qris-fake {
+    width: 160px;
+    height: 160px;
+    background: white;
+    border-radius: 12px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+}
+
+.qris-corner {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-color: var(--primary);
+    border-style: solid;
+}
+
+.qris-corner.tl { top: 8px; left: 8px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+.qris-corner.tr { top: 8px; right: 8px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+.qris-corner.bl { bottom: 8px; left: 8px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+.qris-corner.br { bottom: 8px; right: 8px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+.qris-inner { text-align: center; color: var(--primary); }
+.qris-inner i { font-size: 3rem; display: block; margin-bottom: 6px; }
+.qris-inner p { font-size: 0.7rem; font-weight: 700; color: #333; }
+
+.qris-box small { color: #666; font-size: 0.78rem; text-align: center; }
+
+.transfer-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.transfer-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(108,99,255,0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.transfer-label { color: #888; font-size: 0.78rem; margin-bottom: 4px; }
+
+.transfer-number {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+}
+
+.transfer-number:hover { color: var(--accent); }
+.transfer-number.copied { color: #22c55e; }
+.transfer-number i { font-size: 0.85rem; color: #555; }
+
+.transfer-name { color: #666; font-size: 0.78rem; margin-top: 4px; }
+
+/* ─── BANK TABS ──────────────────────────────────────────────────────── */
+.bank-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bank-tab {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #888;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.bank-tab.active {
+    background: rgba(108,99,255,0.15);
+    border-color: rgba(108,99,255,0.4);
+    color: white;
+}
+
+/* ─── PAYMENT STEPS ──────────────────────────────────────────────────── */
+.payment-steps { display: flex; flex-direction: column; gap: 10px; }
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #aaa;
+    font-size: 0.85rem;
+}
+
+.step span {
+    width: 24px;
+    height: 24px;
+    background: rgba(108,99,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.step strong { color: white; }
+
+/* ─── UPLOAD SECTION ─────────────────────────────────────────────────── */
+.upload-section {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.upload-section h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-section h4 i { color: var(--accent); }
+
+.upload-area {
+    border: 2px dashed rgba(108,99,255,0.3);
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #555;
+}
+
+.upload-area:hover {
+    border-color: var(--primary);
+    background: rgba(108,99,255,0.05);
+    color: #888;
+}
+
+.upload-area i { font-size: 2rem; display: block; margin-bottom: 10px; color: var(--primary); }
+.upload-area p { font-size: 0.88rem; margin-bottom: 4px; }
+.upload-area small { font-size: 0.75rem; }
+
+#previewBox { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+
+#previewImg {
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.btn-upload-submit {
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.3s;
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-upload-submit:hover { opacity: 0.85; }
+.btn-upload-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.proof-uploaded {
+    text-align: center;
+    padding: 16px;
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 12px;
+}
+
+.proof-uploaded i { color: #22c55e; font-size: 1.5rem; display: block; margin-bottom: 8px; }
+.proof-uploaded p { color: #22c55e; font-size: 0.85rem; margin-bottom: 12px; }
+.proof-uploaded img { width: 100%; max-height: 150px; object-fit: contain; border-radius: 8px; }
+
+/* ─── RESPONSIVE ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .payment-layout { grid-template-columns: 1fr; }
+    .payment-header h1 { font-size: 1.4rem; }
+}
+
+/* ─── ADMIN: LIHAT BUKTI ─────────────────────────────────────────────── */
+.proof-thumb {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: opacity 0.2s;
+}
+
+.proof-thumb:hover { opacity: 0.8; }

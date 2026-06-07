@@ -61,6 +61,7 @@
                             <th>Pembayaran</th>
                             <th>Total</th>
                             <th>Status</th>
+                            <th>Bukti</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -78,6 +79,15 @@
                                 <span class="badge-status badge-<%= t.status %>">
                                     <%= t.status === 'pending' ? 'Pending' : t.status === 'success' ? 'Sukses' : 'Gagal' %>
                                 </span>
+                            </td>
+                            <td>
+                                <% if (t.proof_image) { %>
+                                <a href="/uploads/<%= t.proof_image %>" target="_blank">
+                                    <img src="/uploads/<%= t.proof_image %>" class="proof-thumb" alt="Bukti">
+                                </a>
+                                <% } else { %>
+                                <span style="color:#555;font-size:0.8rem">Belum upload</span>
+                                <% } %>
                             </td>
                             <td class="td-actions">
                                 <form action="/admin/transactions/<%= t.id %>/status" method="POST">

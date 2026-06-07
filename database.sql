@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     payment     VARCHAR(50) NOT NULL,
     total       INT NOT NULL,
     status      ENUM('pending', 'success', 'failed') DEFAULT 'pending',
+    proof_image VARCHAR(255) DEFAULT NULL,
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

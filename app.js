@@ -3,6 +3,7 @@ const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const multer = require('multer');
 const db = require('./db');
 
 const app = express();
@@ -10,6 +11,25 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ─── MULTER (upload bukti) ─────────────────────────────────────────────
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'public/uploads/'),
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `proof-${Date.now()}${ext}`);
+    }
+});
+const upload = multer({
+    storage,
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Hanya file gambar yang diizinkan!'));
+        }
+        cb(null, true);
+    }
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -285,6 +305,47 @@ app.post('/login', async (req, res) => {
     } catch (err) {
         console.error('Login error:', err);
         res.render('login', { error: 'Terjadi kesalahan, coba lagi!', success: null });
+    }
+});
+
+// ─── HALAMAN INSTRUKSI PEMBAYARAN ────────────────────────────────────
+app.get('/payment/:code', requireLogin, async (req, res) => {
+    try {
+        const [rows] = await db.execute(
+            'SELECT * FROM transactions WHERE code = ? AND user_id = ?',
+            [req.params.code, req.session.user.id]
+        );
+        if (rows.length === 0) return res.redirect('/history');
+        res.render('payment', { user: req.session.user, transaction: rows[0] });
+    } catch (err) {
+        console.error(err);
+        res.redirect('/history');
+    }
+});
+
+// ─── UPLOAD BUKTI PEMBAYARAN ──────────────────────────────────────────
+app.post('/upload-proof', requireLogin, upload.single('proof'), async (req, res) => {
+    try {
+        const { code } = req.body;
+        if (!req.file) return res.json({ success: false, error: 'File tidak ditemukan!' });
+
+        const [rows] = await db.execute(
+            'SELECT * FROM transactions WHERE code = ? AND user_id = ?',
+            [code, req.session.user.id]
+        );
+
+        if (rows.length === 0) return res.json({ success: false, error: 'Transaksi tidak ditemukan!' });
+        if (rows[0].proof_image) return res.json({ success: false, error: 'Bukti sudah pernah diupload!' });
+
+        await db.execute(
+            'UPDATE transactions SET proof_image = ? WHERE code = ?',
+            [req.file.filename, code]
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, error: 'Gagal menyimpan bukti!' });
     }
 });
 

@@ -179,11 +179,11 @@
             </div>
 
             <div class="invoice-actions">
-                <button type="button" class="btn-invoice-secondary" onclick="closeInvoice()">
-                    Tutup
-                </button>
-                <button type="button" class="btn-invoice-primary" onclick="resetOrder()">
+                <button type="button" class="btn-invoice-secondary" onclick="resetOrder()">
                     Pesan Lagi
+                </button>
+                <button type="button" class="btn-invoice-primary" id="btnPayNow" onclick="goToPayment()">
+                    <i class="fas fa-credit-card"></i> Bayar Sekarang
                 </button>
             </div>
         </div>
@@ -445,6 +445,7 @@
                 document.body.classList.add('modal-open');
                 setTimeout(() => invoiceModal.classList.add('is-open'), 10);
 
+                lastTransactionCode = data.code;
                 showToast('Pesanan berhasil dibuat!', 'success');
 
             } catch (err) {
@@ -464,6 +465,15 @@
             setTimeout(() => {
                 invoiceModal.hidden = true;
             }, 200);
+        }
+
+        // ─── GO TO PAYMENT ────────────────────────────────────────────
+        let lastTransactionCode = null;
+
+        function goToPayment() {
+            if (lastTransactionCode) {
+                window.location.href = '/payment/' + lastTransactionCode;
+            }
         }
 
         // ─── RESET ORDER ──────────────────────────────────────────────────
