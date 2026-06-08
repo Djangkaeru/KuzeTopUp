@@ -62,26 +62,57 @@
         </div>
     </nav>
 
+    <!-- BANNER CAROUSEL -->
+    <div class="banner-carousel" id="bannerCarousel">
+        <div class="banner-track" id="bannerTrack">
+            <div class="banner-slide">
+                <img src="/images/banner1.png" alt="KuzeTopUp Banner">
+                <div class="banner-overlay"></div>
+            </div>
+            <div class="banner-slide">
+                <img src="/images/banner1.png" alt="KuzeTopUp Banner 2">
+                <div class="banner-overlay"></div>
+                <div class="banner-text">
+                    <h2>Top Up Cepat & Aman</h2>
+                    <p>Proses otomatis 24 jam, tersedia 6 game populer</p>
+                </div>
+            </div>
+            <div class="banner-slide">
+                <img src="/images/banner1.png" alt="KuzeTopUp Banner 3">
+                <div class="banner-overlay"></div>
+                <div class="banner-text">
+                    <h2>Pembayaran Mudah</h2>
+                    <p>QRIS, e-wallet, dan transfer bank tersedia</p>
+                </div>
+            </div>
+        </div>
+
+        <button class="banner-arrow banner-prev" onclick="changeBanner(-1)">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="banner-arrow banner-next" onclick="changeBanner(1)">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <div class="banner-dots" id="bannerDots">
+            <button class="banner-dot active" onclick="goToBanner(0)"></button>
+            <button class="banner-dot" onclick="goToBanner(1)"></button>
+            <button class="banner-dot" onclick="goToBanner(2)"></button>
+        </div>
+    </div>
+
     <!-- HERO -->
     <section class="hero" id="home">
-
         <div class="hero-content">
-
             <h1>
                 Top Up Game<br>
                 <span>Tercepat & Termurah</span>
             </h1>
-
-            <p>
-                Proses otomatis 24 jam, aman, dan terpercaya!
-            </p>
-
+            <p>Proses otomatis 24 jam, aman, dan terpercaya!</p>
             <a href="#games" class="btn-hero">
                 Mulai Top Up
             </a>
-
         </div>
-
     </section>
 
     <!-- GAMES -->
