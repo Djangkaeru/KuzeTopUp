@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - KuzeTopUp</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-body">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <i class="fas fa-bolt"></i>
+            <span>Kuze<b>Admin</b></span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin" class="sidebar-link active">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </a>
+            <a href="/admin/users" class="sidebar-link">
+                <i class="fas fa-users"></i> Users
+            </a>
+            <a href="/admin/transactions" class="sidebar-link">
+                <i class="fas fa-receipt"></i> Transaksi
+            </a>
+            <a href="/admin/games" class="sidebar-link">
+                <i class="fas fa-gamepad"></i> Games
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <i class="fas fa-circle-user"></i>
+                <span><%= user.username %></span>
+            </div>
+            <form action="/logout" method="POST">
+                <button type="submit" class="btn-logout">
+                    <i class="fas fa-right-from-bracket"></i> Logout
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="admin-page-title">Dashboard</h1>
+            <a href="/" target="_blank" class="btn-visit-site">
+                <i class="fas fa-arrow-up-right-from-square"></i> Lihat Website
+            </a>
+        </div>
+
+        <!-- STATS CARDS -->
+        <div class="admin-stats">
+            <div class="stat-card">
+                <div class="stat-icon stat-blue">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <p>Total Users</p>
+                    <h2><%= stats.totalUsers %></h2>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-green">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="stat-info">
+                    <p>Total Transaksi</p>
+                    <h2><%= stats.totalTransactions %></h2>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-purple">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <div class="stat-info">
+                    <p>Total Games</p>
+                    <h2><%= stats.totalGames %></h2>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-yellow">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-info">
+                    <p>Total Pendapatan</p>
+                    <h2>Rp <%= stats.totalRevenue.toLocaleString('id-ID') %></h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABEL TRANSAKSI TERBARU -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3><i class="fas fa-clock-rotate-left"></i> Transaksi Terbaru</h3>
+                <a href="/admin/transactions" class="btn-admin-link">Lihat Semua</a>
+            </div>
+            <% if (recentTransactions.length === 0) { %>
+            <div class="admin-empty">
+                <i class="fas fa-inbox"></i>
+                <p>Belum ada transaksi</p>
+            </div>
+            <% } else { %>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>User</th>
+                            <th>Game</th>
+                            <th>Nominal</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Waktu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% recentTransactions.forEach(t => { %>
+                        <tr>
+                            <td><code><%= t.code %></code></td>
+                            <td><%= t.username %></td>
+                            <td><%= t.game %></td>
+                            <td><%= t.nominal %></td>
+                            <td>Rp <%= t.total.toLocaleString('id-ID') %></td>
+                            <td>
+                                <span class="badge-status badge-<%= t.status %>">
+                                    <%= t.status === 'pending' ? 'Pending' : t.status === 'success' ? 'Sukses' : 'Gagal' %>
+                                </span>
+                            </td>
+                            <td><%= new Date(t.createdAt).toLocaleString('id-ID') %></td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- TABEL USER TERBARU -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3><i class="fas fa-user-plus"></i> User Terbaru</h3>
+                <a href="/admin/users" class="btn-admin-link">Lihat Semua</a>
+            </div>
+            <% if (recentUsers.length === 0) { %>
+            <div class="admin-empty">
+                <i class="fas fa-inbox"></i>
+                <p>Belum ada user</p>
+            </div>
+            <% } else { %>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Daftar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% recentUsers.forEach(u => { %>
+                        <tr>
+                            <td><%= u.id %></td>
+                            <td><i class="fas fa-circle-user" style="color:var(--accent)"></i> <%= u.username %></td>
+                            <td><%= u.email %></td>
+                            <td><%= new Date(u.createdAt).toLocaleString('id-ID') %></td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+            <% } %>
+        </div>
+    </main>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('sidebar-open');
+        }
+    </script>
+</body>
+</html>

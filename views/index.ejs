@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KuzeTopUp - Top Up Game Tercepat</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <span>Kuze<b>TopUp</b></span>
+            </div>
+
+            <ul class="nav-links">
+                <li>
+                    <a href="#home" onclick="event.preventDefault();document.querySelector('#home').scrollIntoView({behavior:'smooth'})">Home</a>
+                </li>
+                <li>
+                    <a href="#games" onclick="event.preventDefault();document.querySelector('#games').scrollIntoView({behavior:'smooth'})">Games</a>
+                </li>
+                <li>
+                    <a href="#cara-order" onclick="event.preventDefault();document.querySelector('#cara-order').scrollIntoView({behavior:'smooth'})">Cara Order</a>
+                </li>
+                <li>
+                    <a href="#kontak" onclick="event.preventDefault();document.querySelector('#kontak').scrollIntoView({behavior:'smooth'})">Kontak</a>
+                </li>
+            </ul>
+
+            <div class="nav-auth">
+                <% if (user) { %>
+                    <a href="/history" class="btn-nav-login">
+                        <i class="fas fa-clock-rotate-left"></i> Riwayat
+                    </a>
+                    <div class="nav-user">
+                        <i class="fas fa-circle-user"></i>
+                        <span><%= user.username %></span>
+                    </div>
+                    <form action="/logout" method="POST" style="margin:0">
+                        <button type="submit" class="btn-logout">
+                            <i class="fas fa-right-from-bracket"></i> Logout
+                        </button>
+                    </form>
+                <% } else { %>
+                    <a href="/login" class="btn-nav-login">Login</a>
+                    <a href="/register" class="btn-nav-register">Daftar</a>
+                <% } %>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- BANNER CAROUSEL -->
+    <div class="banner-carousel" id="bannerCarousel">
+        <div class="banner-track" id="bannerTrack">
+            <div class="banner-slide">
+                <img src="/images/banner1.png" alt="KuzeTopUp Banner">
+                <div class="banner-overlay"></div>
+            </div>
+            <div class="banner-slide">
+                <img src="/images/banner1.png" alt="KuzeTopUp Banner 2">
+                <div class="banner-overlay"></div>
+                <div class="banner-text">
+                    <h2>Top Up Cepat & Aman</h2>
+                    <p>Proses otomatis 24 jam, tersedia 6 game populer</p>
+                </div>
+            </div>
+            <div class="banner-slide">
+                <img src="/images/banner1.png" alt="KuzeTopUp Banner 3">
+                <div class="banner-overlay"></div>
+                <div class="banner-text">
+                    <h2>Pembayaran Mudah</h2>
+                    <p>QRIS, e-wallet, dan transfer bank tersedia</p>
+                </div>
+            </div>
+        </div>
+
+        <button class="banner-arrow banner-prev" onclick="changeBanner(-1)">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="banner-arrow banner-next" onclick="changeBanner(1)">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <div class="banner-dots" id="bannerDots">
+            <button class="banner-dot active" onclick="goToBanner(0)"></button>
+            <button class="banner-dot" onclick="goToBanner(1)"></button>
+            <button class="banner-dot" onclick="goToBanner(2)"></button>
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1>
+                Top Up Game<br>
+                <span>Tercepat & Termurah</span>
+            </h1>
+            <p>Proses otomatis 24 jam, aman, dan terpercaya!</p>
+            <a href="#games" class="btn-hero">
+                Mulai Top Up
+            </a>
+        </div>
+    </section>
+
+    <!-- GAMES -->
+    <section class="games-section" id="games">
+
+        <h2 class="section-title">
+            Pilih Game
+        </h2>
+
+        <p class="section-sub">
+            Top up game favoritmu dengan mudah
+        </p>
+
+        <%
+            const categories = [...new Set(games.map(game => game.category))];
+        %>
+
+        <div class="game-tools" aria-label="Cari dan filter game">
+            <div class="search-box">
+                <i class="fas fa-magnifying-glass"></i>
+                <input
+                    type="search"
+                    id="gameSearch"
+                    placeholder="Cari game..."
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="category-filters" id="categoryFilters">
+                <button type="button" class="filter-chip active" data-category="all">
+                    Semua
+                </button>
+
+                <% categories.forEach(category => { %>
+                <button type="button" class="filter-chip" data-category="<%= category %>">
+                    <%= category %>
+                </button>
+                <% }) %>
+            </div>
+        </div>
+
+        <p class="empty-games" id="emptyGames" hidden>
+            Game tidak ditemukan.
+        </p>
+
+        <div class="games-grid">
+
+            <% games.forEach(game => { %>
+
+            <div class="game-card"
+            data-game-name="<%= game.name %>"
+            data-game-category="<%= game.category %>"
+            onclick="window.location='/game/<%= game.id %>'">
+
+                <% if (game.badge) { %>
+                <span class="badge">
+                    <%= game.badge %>
+                </span>
+                <% } %>
+
+                <div class="game-icon">
+                    <img src="<%= game.icon %>" alt="<%= game.name %>">
+                </div>
+
+                <h3>
+                    <%= game.name %>
+                </h3>
+
+                <p>
+                    <%= game.category %>
+                </p>
+
+            </div>
+
+            <% }) %>
+
+        </div>
+
+    </section>
+
+    <!-- CARA ORDER -->
+    <section class="cara-order" id="cara-order">
+
+        <h2 class="section-title">
+            Cara Order
+        </h2>
+
+        <div class="steps">
+
+            <div class="step">
+                <div class="step-icon">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+
+                <h3>1. Pilih Game</h3>
+
+                <p>
+                    Pilih game yang ingin kamu top up
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+
+                <h3>2. Pilih Nominal</h3>
+
+                <p>
+                    Pilih jumlah diamond/koin yang diinginkan
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+
+                <h3>3. Bayar</h3>
+
+                <p>
+                    Pilih metode pembayaran favoritmu
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+
+                <h3>4. Terima</h3>
+
+                <p>
+                    Item langsung masuk ke akunmu!
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer" id="kontak">
+
+        <div class="footer-content">
+
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <span>Kuze<b>TopUp</b></span>
+            </div>
+
+            <p>
+                © 2026 KuzeTopUp. All rights reserved.
+            </p>
+
+        </div>
+
+    </footer>
+
+    <script src="/js/script.js"></script>
+
+    <script>
+        // === INFINITE CAROUSEL ===
+        // Teknik: clone slide pertama ditaruh di akhir, clone slide terakhir di awal
+        // Sehingga saat transisi melewati ujung, langsung "teleport" tanpa animasi ke posisi asli
+
+        const track       = document.getElementById('bannerTrack');
+        const dots        = document.querySelectorAll('.banner-dot');
+        const slides      = Array.from(track.querySelectorAll('.banner-slide'));
+        const total       = slides.length; // jumlah slide asli (3)
+        let current       = 1;            // mulai dari index 1 (setelah clone pertama)
+        let isTransitioning = false;
+        let autoSlideTimer  = null;
+
+        // --- 1. Buat clone: taruh clone slide terakhir di depan, clone slide pertama di belakang ---
+        const cloneFirst = slides[0].cloneNode(true);
+        const cloneLast  = slides[total - 1].cloneNode(true);
+        track.appendChild(cloneFirst);       // clone slide 1 → taruh di posisi paling akhir
+        track.insertBefore(cloneLast, slides[0]); // clone slide terakhir → taruh di posisi paling awal
+
+        // Total slide sekarang = total + 2 (termasuk 2 clone)
+        // Urutan: [clone-last] [slide1] [slide2] [slide3] [clone-first]
+        //          index  0      1        2        3         4
+
+        // --- 2. Set posisi awal ke slide pertama asli (index 1) tanpa animasi ---
+        setPosition(current, false);
+
+        // --- 3. Fungsi posisi ---
+        function setPosition(index, animate) {
+            track.style.transition = animate
+                ? 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                : 'none';
+            track.style.transform = `translateX(-${index * 100}%)`;
+        }
+
+        // --- 4. Update dot aktif (index dot = current - 1, karena ada clone di depan) ---
+        function updateDots() {
+            // real index: current - 1, dengan wrap
+            const realIndex = ((current - 1) % total + total) % total;
+            dots.forEach((dot, i) => dot.classList.toggle('active', i === realIndex));
+        }
+
+        // --- 5. Pindah slide ---
+        function moveTo(index, animate = true) {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            current = index;
+            setPosition(current, animate);
+            updateDots();
+        }
+
+        // --- 6. Setelah transisi selesai: kalau di clone, teleport ke slide asli ---
+        track.addEventListener('transitionend', () => {
+            isTransitioning = false;
+
+            if (current === 0) {
+                // Sedang di clone-last → teleport ke slide terakhir asli (index total)
+                current = total;
+                setPosition(current, false);
+            } else if (current === total + 1) {
+                // Sedang di clone-first → teleport ke slide pertama asli (index 1)
+                current = 1;
+                setPosition(current, false);
+            }
+        });
+
+        // --- 7. Fungsi publik dipanggil dari tombol panah ---
+        function changeBanner(direction) {
+            moveTo(current + direction);
+            resetAutoSlide();
+        }
+
+        function goToBanner(index) {
+            // index dari dot: 0,1,2 → index track: 1,2,3
+            moveTo(index + 1);
+            resetAutoSlide();
+        }
+
+        // --- 8. Auto slide setiap 4 detik ---
+        function resetAutoSlide() {
+            clearInterval(autoSlideTimer);
+            autoSlideTimer = setInterval(() => moveTo(current + 1), 4000);
+        }
+
+        updateDots();
+        resetAutoSlide();
+    </script>
+
+</body>
+</html>

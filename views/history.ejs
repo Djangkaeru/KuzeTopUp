@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Transaksi - KuzeTopUp</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <span>Kuze<b>TopUp</b></span>
+            </div>
+            <div class="nav-auth">
+                <a href="/" class="btn-back"><i class="fas fa-arrow-left"></i> Kembali</a>
+                <div class="nav-user">
+                    <i class="fas fa-circle-user"></i>
+                    <span><%= user.username %></span>
+                </div>
+                <form action="/logout" method="POST" style="margin:0">
+                    <button type="submit" class="btn-logout">
+                        <i class="fas fa-right-from-bracket"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <section class="history-page">
+        <div class="history-header">
+            <h1><i class="fas fa-clock-rotate-left"></i> Riwayat Transaksi</h1>
+            <p>Semua pesanan yang pernah kamu buat</p>
+        </div>
+
+        <% if (transactions.length === 0) { %>
+        <div class="history-empty">
+            <i class="fas fa-inbox"></i>
+            <h3>Belum ada transaksi</h3>
+            <p>Kamu belum pernah melakukan top up</p>
+            <a href="/" class="btn-history-cta">Top Up Sekarang</a>
+        </div>
+        <% } else { %>
+        <div class="history-list">
+            <% transactions.forEach(t => { %>
+            <div class="history-card">
+                <div class="history-card-top">
+                    <div class="history-game">
+                        <i class="fas fa-gamepad"></i>
+                        <div>
+                            <strong><%= t.game %></strong>
+                            <span><%= t.nominal %></span>
+                        </div>
+                    </div>
+                    <span class="badge-status badge-<%= t.status %>">
+                        <%= t.status === 'pending' ? '⏳ Pending' : t.status === 'success' ? '✅ Sukses' : '❌ Gagal' %>
+                    </span>
+                </div>
+
+                <div class="history-card-info">
+                    <div>
+                        <span>Kode Transaksi</span>
+                        <code><%= t.code %></code>
+                    </div>
+                    <div>
+                        <span>User ID Game</span>
+                        <strong><%= t.gameUserId %><% if(t.serverId){ %> / <%= t.serverId %><% } %></strong>
+                    </div>
+                    <div>
+                        <span>Pembayaran</span>
+                        <strong><%= t.payment %></strong>
+                    </div>
+                    <div>
+                        <span>Total</span>
+                        <strong class="history-total">Rp <%= t.total.toLocaleString('id-ID') %></strong>
+                    </div>
+                    <div>
+                        <span>Waktu</span>
+                        <strong><%= new Date(t.createdAt).toLocaleString('id-ID') %></strong>
+                    </div>
+                </div>
+            </div>
+            <% }) %>
+        </div>
+        <% } %>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <span>Kuze<b>TopUp</b></span>
+            </div>
+            <p>&copy; 2026 KuzeTopUp. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
