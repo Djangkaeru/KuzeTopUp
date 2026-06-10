@@ -7,6 +7,61 @@
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ── Diamond Terkirim Banner ── */
+        .diamond-delivered-banner {
+            background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(52,211,153,0.08));
+            border: 1px solid rgba(16,185,129,0.4);
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin: 24px 0 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            animation: fadeInDown 0.5s ease;
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .diamond-delivered-icon {
+            font-size: 2.2rem;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .diamond-delivered-text h4 {
+            color: #10b981;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0 0 4px;
+        }
+        .diamond-delivered-text p {
+            color: #6ee7b7;
+            font-size: 0.88rem;
+            margin: 0 0 6px;
+        }
+        .diamond-delivered-text small {
+            color: #4b5563;
+            font-size: 0.78rem;
+        }
+        .diamond-delivered-note {
+            display: inline-block;
+            margin-top: 8px;
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.83rem;
+            color: #34d399;
+            font-style: italic;
+        }
+        /* Override status badge kalau diamond sudah dikirim */
+        .payment-status-badge.delivered {
+            background: rgba(16,185,129,0.2);
+            border-color: rgba(16,185,129,0.4);
+            color: #10b981;
+        }
+    </style>
 </head>
 <body>
 
@@ -39,17 +94,24 @@
 
         <!-- HEADER -->
         <div class="payment-header">
-            <div class="payment-status-badge">
-                <i class="fas fa-clock"></i> Menunggu Pembayaran
-            </div>
-            <h1>Selesaikan Pembayaran</h1>
-            <p>Sebelum waktu habis, segera lakukan pembayaran</p>
-
-            <!-- COUNTDOWN -->
-            <div class="payment-countdown">
-                <i class="fas fa-hourglass-half"></i>
-                <span id="countdown">30:00</span>
-            </div>
+            <% if (transaction.diamond_sent_at) { %>
+                <div class="payment-status-badge delivered">
+                    <i class="fas fa-check-circle"></i> Diamond Terkirim!
+                </div>
+                <h1>Pembayaran Selesai</h1>
+                <p>Diamond kamu sudah berhasil dikirim ke akunmu</p>
+            <% } else { %>
+                <div class="payment-status-badge">
+                    <i class="fas fa-clock"></i> Menunggu Pembayaran
+                </div>
+                <h1>Selesaikan Pembayaran</h1>
+                <p>Sebelum waktu habis, segera lakukan pembayaran</p>
+                <!-- COUNTDOWN -->
+                <div class="payment-countdown">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span id="countdown">30:00</span>
+                </div>
+            <% } %>
         </div>
 
         <div class="payment-layout">
@@ -99,24 +161,63 @@
                 <% if (transaction.payment === 'QRIS') { %>
                 <div class="payment-method-info">
                     <div class="qris-box">
-                        <div class="qris-fake">
-                            <div class="qris-corner tl"></div>
-                            <div class="qris-corner tr"></div>
-                            <div class="qris-corner bl"></div>
-                            <div class="qris-corner br"></div>
-                            <div class="qris-inner">
-                                <i class="fas fa-qrcode"></i>
-                                <p>QRIS KuzeTopUp</p>
+
+                        <!-- Header QRIS -->
+                        <div class="qris-header">
+                            <div class="qris-logo-row">
+                                <span class="qris-logo-text">QRIS</span>
+                                <span class="qris-demo-badge"><i class="fas fa-flask"></i> SIMULASI</span>
                             </div>
+                            <p class="qris-merchant-name">KuzeTopUp Store</p>
                         </div>
-                        <small>Scan QR ini dengan aplikasi e-wallet apapun</small>
+
+                        <!-- QR Code Container -->
+                        <div class="qris-qr-wrapper" id="qrisWrapper">
+                            <div class="qris-loading" id="qrisLoading">
+                                <div class="qris-spinner"></div>
+                                <span>Membuat QR Code...</span>
+                            </div>
+                            <div class="qris-error" id="qrisError" style="display:none">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Gagal memuat QR Code</span>
+                            </div>
+                            <img id="qrisImg" src="" alt="QRIS QR Code" class="qris-img" style="display:none">
+                        </div>
+
+                        <!-- Nominal -->
+                        <div class="qris-amount-box">
+                            <span class="qris-amount-label">Total Pembayaran</span>
+                            <span class="qris-amount-value">Rp <%= transaction.total.toLocaleString('id-ID') %></span>
+                        </div>
+
+                        <!-- Kode Transaksi -->
+                        <div class="qris-trxcode">
+                            <i class="fas fa-receipt"></i>
+                            <span><%= transaction.code %></span>
+                        </div>
+
+                        <!-- Tombol aksi -->
+                        <div class="qris-actions" id="qrisActions" style="display:none">
+                            <button class="btn-qris-download" onclick="downloadQR()">
+                                <i class="fas fa-download"></i> Simpan QR
+                            </button>
+                            <button class="btn-qris-refresh" onclick="loadQRIS()">
+                                <i class="fas fa-rotate-right"></i> Refresh
+                            </button>
+                        </div>
+
+                        <small class="qris-note">
+                            <i class="fas fa-shield-halved"></i>
+                            QR ini adalah simulasi &mdash; tidak memproses uang nyata
+                        </small>
                     </div>
+
                     <div class="payment-steps">
                         <div class="step"><span>1</span> Buka aplikasi e-wallet kamu</div>
-                        <div class="step"><span>2</span> Pilih fitur Scan / QRIS</div>
-                        <div class="step"><span>3</span> Scan QR di atas</div>
-                        <div class="step"><span>4</span> Bayar sebesar <strong>Rp <%= transaction.total.toLocaleString('id-ID') %></strong></div>
-                        <div class="step"><span>5</span> Screenshot bukti pembayaran</div>
+                        <div class="step"><span>2</span> Pilih fitur <strong>Scan / QRIS</strong></div>
+                        <div class="step"><span>3</span> Arahkan kamera ke QR di atas <em>(simulasi)</em></div>
+                        <div class="step"><span>4</span> Nominal <strong>Rp <%= transaction.total.toLocaleString('id-ID') %></strong> sudah terisi otomatis</div>
+                        <div class="step"><span>5</span> Screenshot &amp; upload bukti di bawah</div>
                     </div>
                 </div>
 
@@ -214,7 +315,29 @@
                 <!-- UPLOAD BUKTI -->
                 <div class="upload-section">
                     <h4><i class="fas fa-upload"></i> Upload Bukti Pembayaran</h4>
-                    <% if (transaction.proof_image) { %>
+                    <% if (transaction.diamond_sent_at) { %>
+                        <!-- ── DIAMOND SUDAH TERKIRIM ── -->
+                        <div class="diamond-delivered-banner">
+                            <div class="diamond-delivered-icon">💎</div>
+                            <div class="diamond-delivered-text">
+                                <h4>Diamond Berhasil Dikirim!</h4>
+                                <p><%= transaction.nominal %> sudah masuk ke akun game kamu.</p>
+                                <small>Dikirim pada: <%= new Date(transaction.diamond_sent_at).toLocaleString('id-ID') %></small>
+                                <% if (transaction.diamond_note) { %>
+                                    <div class="diamond-delivered-note">
+                                        <i class="fas fa-comment-dots"></i> &ldquo;<%= transaction.diamond_note %>&rdquo;
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                        <% if (transaction.proof_image) { %>
+                        <div class="proof-uploaded" style="margin-top:12px">
+                            <i class="fas fa-circle-check"></i>
+                            <p>Bukti pembayaran tersimpan.</p>
+                            <img src="/uploads/<%= transaction.proof_image %>" alt="Bukti Transfer">
+                        </div>
+                        <% } %>
+                    <% } else if (transaction.proof_image) { %>
                         <div class="proof-uploaded">
                             <i class="fas fa-circle-check"></i>
                             <p>Bukti sudah diupload! Menunggu konfirmasi admin.</p>
@@ -227,8 +350,8 @@
                             <small>Format: JPG, PNG, maksimal 2MB</small>
                         </div>
                         <input type="file" id="proofFile" accept="image/*" style="display:none" onchange="previewFile(this)">
-                        <div id="previewBox" style="display:none">
-                            <img id="previewImg" src="" alt="Preview">
+                        <div id="previewBox" class="preview-box-hidden">
+                            <img id="previewImg" src="" alt="Preview" class="proof-preview-img">
                             <button type="button" class="btn-upload-submit" id="btnUpload" onclick="uploadProof()">
                                 <i class="fas fa-paper-plane"></i> Kirim Bukti
                             </button>
@@ -286,9 +409,14 @@
             }
             const reader = new FileReader();
             reader.onload = e => {
-                document.getElementById('previewImg').src = e.target.result;
-                document.getElementById('previewBox').style.display = 'block';
-                document.getElementById('uploadArea').style.display = 'none';
+                const previewImg = document.getElementById('previewImg');
+                const previewBox = document.getElementById('previewBox');
+                const uploadArea = document.getElementById('uploadArea');
+                if (!previewImg || !previewBox || !uploadArea) return;
+                previewImg.src = e.target.result;
+                previewBox.classList.remove('preview-box-hidden');
+                previewBox.classList.add('preview-box-visible');
+                uploadArea.style.display = 'none';
             };
             reader.readAsDataURL(file);
         }
@@ -324,6 +452,60 @@
                 btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Bukti';
             }
         }
+
+        // ─── QRIS: LOAD QR CODE ───────────────────────────────────────
+        let qrDataUrl = null;
+
+        async function loadQRIS() {
+            const wrapper   = document.getElementById('qrisWrapper');
+            const loading   = document.getElementById('qrisLoading');
+            const errorBox  = document.getElementById('qrisError');
+            const img       = document.getElementById('qrisImg');
+            const actions   = document.getElementById('qrisActions');
+
+            if (!wrapper) return; // bukan halaman QRIS
+
+            // reset state
+            loading.style.display  = 'flex';
+            errorBox.style.display = 'none';
+            img.style.display      = 'none';
+            actions.style.display  = 'none';
+            qrDataUrl = null;
+
+            try {
+                const res  = await fetch(`/qris/${transactionCode}`);
+                const data = await res.json();
+
+                if (data.success && data.qr) {
+                    qrDataUrl     = data.qr;
+                    img.src       = data.qr;
+                    img.style.display      = 'block';
+                    actions.style.display  = 'flex';
+                    showToast('QR Code siap di-scan!', 'success');
+                } else {
+                    throw new Error('no qr');
+                }
+            } catch {
+                errorBox.style.display = 'flex';
+                showToast('Gagal membuat QR Code', 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // ─── QRIS: DOWNLOAD QR ────────────────────────────────────────
+        function downloadQR() {
+            if (!qrDataUrl) return;
+            const a = document.createElement('a');
+            a.href     = qrDataUrl;
+            a.download = `QRIS-KuzeTopUp-${transactionCode}.png`;
+            a.click();
+        }
+
+        // ─── AUTO-LOAD QRIS JIKA METODE = QRIS ───────────────────────
+        window.addEventListener('DOMContentLoaded', () => {
+            if (document.getElementById('qrisWrapper')) loadQRIS();
+        });
 
         // ─── TOAST ────────────────────────────────────────────────────
         function showToast(message, type = 'error') {

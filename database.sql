@@ -27,10 +27,16 @@ CREATE TABLE IF NOT EXISTS transactions (
     payment     VARCHAR(50) NOT NULL,
     total       INT NOT NULL,
     status      ENUM('pending', 'success', 'failed') DEFAULT 'pending',
-    proof_image VARCHAR(255) DEFAULT NULL,
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    proof_image     VARCHAR(255) DEFAULT NULL,
+    diamond_sent_at DATETIME DEFAULT NULL,
+    diamond_note    VARCHAR(255) DEFAULT NULL,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Jalankan ini jika tabel sudah ada (ALTER):
+-- ALTER TABLE transactions ADD COLUMN diamond_sent_at DATETIME DEFAULT NULL;
+-- ALTER TABLE transactions ADD COLUMN diamond_note VARCHAR(255) DEFAULT NULL;
 
 -- ─── INDEX ────────────────────────────────────────────────────────────
 CREATE INDEX idx_transactions_user_id ON transactions(user_id);

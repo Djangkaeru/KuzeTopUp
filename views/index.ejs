@@ -274,5 +274,92 @@
 
     <script src="/js/script.js"></script>
 
+    <script>
+        // === INFINITE CAROUSEL ===
+        // Teknik: clone slide pertama ditaruh di akhir, clone slide terakhir di awal
+        // Sehingga saat transisi melewati ujung, langsung "teleport" tanpa animasi ke posisi asli
+
+        const track       = document.getElementById('bannerTrack');
+        const dots        = document.querySelectorAll('.banner-dot');
+        const slides      = Array.from(track.querySelectorAll('.banner-slide'));
+        const total       = slides.length; // jumlah slide asli (3)
+        let current       = 1;            // mulai dari index 1 (setelah clone pertama)
+        let isTransitioning = false;
+        let autoSlideTimer  = null;
+
+        // --- 1. Buat clone: taruh clone slide terakhir di depan, clone slide pertama di belakang ---
+        const cloneFirst = slides[0].cloneNode(true);
+        const cloneLast  = slides[total - 1].cloneNode(true);
+        track.appendChild(cloneFirst);       // clone slide 1 → taruh di posisi paling akhir
+        track.insertBefore(cloneLast, slides[0]); // clone slide terakhir → taruh di posisi paling awal
+
+        // Total slide sekarang = total + 2 (termasuk 2 clone)
+        // Urutan: [clone-last] [slide1] [slide2] [slide3] [clone-first]
+        //          index  0      1        2        3         4
+
+        // --- 2. Set posisi awal ke slide pertama asli (index 1) tanpa animasi ---
+        setPosition(current, false);
+
+        // --- 3. Fungsi posisi ---
+        function setPosition(index, animate) {
+            track.style.transition = animate
+                ? 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                : 'none';
+            track.style.transform = `translateX(-${index * 100}%)`;
+        }
+
+        // --- 4. Update dot aktif (index dot = current - 1, karena ada clone di depan) ---
+        function updateDots() {
+            // real index: current - 1, dengan wrap
+            const realIndex = ((current - 1) % total + total) % total;
+            dots.forEach((dot, i) => dot.classList.toggle('active', i === realIndex));
+        }
+
+        // --- 5. Pindah slide ---
+        function moveTo(index, animate = true) {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            current = index;
+            setPosition(current, animate);
+            updateDots();
+        }
+
+        // --- 6. Setelah transisi selesai: kalau di clone, teleport ke slide asli ---
+        track.addEventListener('transitionend', () => {
+            isTransitioning = false;
+
+            if (current === 0) {
+                // Sedang di clone-last → teleport ke slide terakhir asli (index total)
+                current = total;
+                setPosition(current, false);
+            } else if (current === total + 1) {
+                // Sedang di clone-first → teleport ke slide pertama asli (index 1)
+                current = 1;
+                setPosition(current, false);
+            }
+        });
+
+        // --- 7. Fungsi publik dipanggil dari tombol panah ---
+        function changeBanner(direction) {
+            moveTo(current + direction);
+            resetAutoSlide();
+        }
+
+        function goToBanner(index) {
+            // index dari dot: 0,1,2 → index track: 1,2,3
+            moveTo(index + 1);
+            resetAutoSlide();
+        }
+
+        // --- 8. Auto slide setiap 4 detik ---
+        function resetAutoSlide() {
+            clearInterval(autoSlideTimer);
+            autoSlideTimer = setInterval(() => moveTo(current + 1), 4000);
+        }
+
+        updateDots();
+        resetAutoSlide();
+    </script>
+
 </body>
 </html>

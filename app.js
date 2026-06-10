@@ -4,6 +4,7 @@ const MySQLStore = require('express-mysql-session')(session);
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const multer = require('multer');
+const QRCode = require('qrcode');
 const db = require('./db');
 
 const app = express();
@@ -323,8 +324,59 @@ app.get('/payment/:code', requireLogin, async (req, res) => {
     }
 });
 
+// ─── QRIS: GENERATE QR CODE (simulasi, bukan uang asli) ───────────────
+app.get('/qris/:code', requireLogin, async (req, res) => {
+    try {
+        const [rows] = await db.execute(
+            'SELECT * FROM transactions WHERE code = ? AND user_id = ?',
+            [req.params.code, req.session.user.id]
+        );
+        if (rows.length === 0) return res.status(404).send('Not found');
+
+        const trx = rows[0];
+
+        // Data QRIS simulasi — format mirip QRIS standar tapi tidak nyata
+        const qrisData = [
+            '000201',                        // payload format indicator
+            '010212',                        // point of initiation: dynamic
+            '2653',                          // merchant account info tag
+            '0016kuzetopup.demo.id',         // merchant domain (simulasi)
+            `01${String(trx.code).length.toString().padStart(2,'0')}${trx.code}`, // transaction code
+            `02${String(trx.total).length.toString().padStart(2,'0')}${trx.total}`, // amount
+            '52045999',                      // merchant category: retail
+            '5303360',                       // currency: IDR (360)
+            `54${String(trx.total).length.toString().padStart(2,'0')}${trx.total}`, // amount field
+            '5802ID',                        // country code
+            '5913KuzeTopUp',                 // merchant name
+            '6013Kudus',                     // merchant city
+            '6304',                          // CRC placeholder
+            'DEMO'                           // marker non-asli
+        ].join('');
+
+        const qrDataUrl = await QRCode.toDataURL(qrisData, {
+            width: 280,
+            margin: 2,
+            color: { dark: '#1a1a2e', light: '#ffffff' },
+            errorCorrectionLevel: 'M'
+        });
+
+        res.json({ success: true, qr: qrDataUrl, total: trx.total, code: trx.code });
+    } catch (err) {
+        console.error('QRIS error:', err);
+        res.status(500).json({ success: false });
+    }
+});
+
 // ─── UPLOAD BUKTI PEMBAYARAN ──────────────────────────────────────────
-app.post('/upload-proof', requireLogin, upload.single('proof'), async (req, res) => {
+app.post('/upload-proof', requireLogin, (req, res, next) => {
+    upload.single('proof')(req, res, (err) => {
+        if (err) {
+            // multer error (ukuran terlalu besar, bukan gambar, dll)
+            return res.json({ success: false, error: err.message || 'File tidak valid!' });
+        }
+        next();
+    });
+}, async (req, res) => {
     try {
         const { code } = req.body;
         if (!req.file) return res.json({ success: false, error: 'File tidak ditemukan!' });
@@ -432,6 +484,34 @@ app.post('/admin/transactions/:id/status', requireAdmin, async (req, res) => {
         console.error(err);
     }
     res.redirect('/admin/transactions');
+});
+
+// ─── ADMIN: KONFIRMASI KIRIM DIAMOND ─────────────────────────────────
+app.post('/admin/transactions/:id/confirm-diamond', requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const { note } = req.body;
+
+    try {
+        const [rows] = await db.execute('SELECT * FROM transactions WHERE id = ?', [id]);
+        if (rows.length === 0) return res.redirect('/admin/transactions');
+
+        const trx = rows[0];
+
+        // Tandai diamond sudah dikirim + set status success
+        await db.execute(
+            `UPDATE transactions
+             SET status = 'success',
+                 diamond_sent_at = NOW(),
+                 diamond_note = ?
+             WHERE id = ?`,
+            [note || `${trx.nominal} berhasil dikirim ke akun ${trx.game_user_id}`, id]
+        );
+
+        res.redirect('/admin/transactions');
+    } catch (err) {
+        console.error('Confirm diamond error:', err);
+        res.redirect('/admin/transactions');
+    }
 });
 
 // ─── ADMIN: GAMES ─────────────────────────────────────────────────────

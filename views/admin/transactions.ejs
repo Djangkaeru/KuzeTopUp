@@ -7,8 +7,171 @@
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ── Modal Konfirmasi Diamond ── */
+        .diamond-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .diamond-modal-overlay.active { display: flex; }
+        .diamond-modal {
+            background: #1a1a2e;
+            border: 1px solid rgba(139,92,246,0.35);
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+        }
+        .diamond-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .diamond-modal-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg,#8b5cf6,#6366f1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: #fff; flex-shrink: 0;
+        }
+        .diamond-modal-header h3 { color: #e2e8f0; font-size: 1.1rem; margin: 0; }
+        .diamond-modal-header p  { color: #94a3b8; font-size: 0.82rem; margin: 2px 0 0; }
+        .diamond-modal-info {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            line-height: 1.9;
+        }
+        .diamond-modal-info strong { color: #a78bfa; }
+        .diamond-modal label {
+            display: block;
+            font-size: 0.82rem;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+        .diamond-modal input[type="text"] {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 0.88rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .diamond-modal input[type="text"]:focus { border-color: #8b5cf6; }
+        .diamond-modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn-cancel-modal {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-family: inherit;
+        }
+        .btn-confirm-diamond {
+            flex: 2;
+            padding: 10px;
+            background: linear-gradient(135deg,#8b5cf6,#6366f1);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-confirm-diamond:hover { opacity: 0.9; }
+        .btn-send-diamond {
+            background: linear-gradient(135deg,#8b5cf6,#6366f1);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            padding: 5px 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            margin-top: 4px;
+        }
+        .btn-send-diamond:hover { opacity: 0.85; }
+        .diamond-sent-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.3);
+            color: #10b981;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .diamond-sent-time {
+            font-size: 0.72rem;
+            color: #64748b;
+            margin-top: 3px;
+            display: block;
+        }
+        .td-actions { min-width: 210px; }
+    </style>
 </head>
 <body class="admin-body">
+
+    <!-- ── MODAL KONFIRMASI KIRIM DIAMOND ── -->
+    <div class="diamond-modal-overlay" id="diamondModal">
+        <div class="diamond-modal">
+            <div class="diamond-modal-header">
+                <div class="diamond-modal-icon">💎</div>
+                <div>
+                    <h3>Konfirmasi Kirim Diamond</h3>
+                    <p>Pastikan bukti pembayaran sudah valid</p>
+                </div>
+            </div>
+            <div class="diamond-modal-info" id="modalInfo">
+                <!-- diisi via JS -->
+            </div>
+            <label for="diamondNote">Catatan pengiriman (opsional)</label>
+            <input type="text" id="diamondNote" placeholder="Contoh: 1024 Diamond sudah masuk ke akun 123456">
+            <div class="diamond-modal-actions">
+                <button class="btn-cancel-modal" onclick="closeModal()">Batal</button>
+                <button class="btn-confirm-diamond" onclick="submitConfirm()">
+                    <i class="fas fa-paper-plane"></i> Kirim Diamond
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- hidden form submit -->
+    <form id="diamondForm" method="POST" style="display:none">
+        <input type="hidden" name="note" id="formNote">
+    </form>
 
     <aside class="admin-sidebar" id="sidebar">
         <div class="sidebar-logo">
@@ -72,7 +235,7 @@
                             <td><%= t.username %></td>
                             <td><%= t.game %></td>
                             <td><%= t.nominal %></td>
-                            <td><%= t.userId %><% if(t.serverId) { %> / <%= t.serverId %><% } %></td>
+                            <td><%= t.game_user_id %><% if(t.server_id) { %> / <%= t.server_id %><% } %></td>
                             <td><%= t.payment %></td>
                             <td>Rp <%= t.total.toLocaleString('id-ID') %></td>
                             <td>
@@ -90,13 +253,42 @@
                                 <% } %>
                             </td>
                             <td class="td-actions">
+                                <!-- Ubah status manual -->
                                 <form action="/admin/transactions/<%= t.id %>/status" method="POST">
                                     <select name="status" class="select-status" onchange="this.form.submit()">
-                                        <option value="pending" <%= t.status === 'pending' ? 'selected' : '' %>>Pending</option>
-                                        <option value="success" <%= t.status === 'success' ? 'selected' : '' %>>Sukses</option>
-                                        <option value="failed" <%= t.status === 'failed' ? 'selected' : '' %>>Gagal</option>
+                                        <option value="pending"  <%= t.status === 'pending'  ? 'selected' : '' %>>Pending</option>
+                                        <option value="success"  <%= t.status === 'success'  ? 'selected' : '' %>>Sukses</option>
+                                        <option value="failed"   <%= t.status === 'failed'   ? 'selected' : '' %>>Gagal</option>
                                     </select>
                                 </form>
+
+                                <!-- Tombol Kirim Diamond: tampil kalau ada bukti & belum dikirim -->
+                                <% if (t.proof_image && !t.diamond_sent_at) { %>
+                                    <button class="btn-send-diamond" onclick="openModal(
+                                        '<%= t.id %>',
+                                        '<%= t.code %>',
+                                        '<%= t.username %>',
+                                        '<%= t.game %>',
+                                        '<%= t.nominal %>',
+                                        '<%= t.game_user_id %>'
+                                    )">
+                                        <i class="fas fa-gem"></i> Kirim Diamond
+                                    </button>
+                                <% } else if (t.diamond_sent_at) { %>
+                                    <div style="margin-top:4px">
+                                        <span class="diamond-sent-badge">
+                                            <i class="fas fa-check-circle"></i> Diamond Terkirim
+                                        </span>
+                                        <span class="diamond-sent-time">
+                                            <%= new Date(t.diamond_sent_at).toLocaleString('id-ID') %>
+                                        </span>
+                                        <% if (t.diamond_note) { %>
+                                        <span class="diamond-sent-time" style="font-style:italic;color:#6b7280">
+                                            "<%= t.diamond_note %>"
+                                        </span>
+                                        <% } %>
+                                    </div>
+                                <% } %>
                             </td>
                         </tr>
                         <% }) %>
@@ -107,6 +299,42 @@
         </div>
     </main>
 
-    <script>function toggleSidebar() { document.getElementById('sidebar').classList.toggle('sidebar-open'); }</script>
+    <script>
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('sidebar-open'); }
+
+        let currentTrxId = null;
+
+        function openModal(id, code, username, game, nominal, gameUserId) {
+            currentTrxId = id;
+            document.getElementById('modalInfo').innerHTML = `
+                <div><b>Kode</b>: <strong>${code}</strong></div>
+                <div><b>User</b>: <strong>${username}</strong></div>
+                <div><b>Game</b>: <strong>${game}</strong></div>
+                <div><b>Nominal</b>: <strong>${nominal}</strong></div>
+                <div><b>User ID Game</b>: <strong>${gameUserId}</strong></div>
+            `;
+            document.getElementById('diamondNote').value = `${nominal} berhasil dikirim ke akun ${gameUserId}`;
+            document.getElementById('diamondModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('diamondModal').classList.remove('active');
+            currentTrxId = null;
+        }
+
+        function submitConfirm() {
+            if (!currentTrxId) return;
+            const note = document.getElementById('diamondNote').value;
+            const form = document.getElementById('diamondForm');
+            form.action = `/admin/transactions/${currentTrxId}/confirm-diamond`;
+            document.getElementById('formNote').value = note;
+            form.submit();
+        }
+
+        // Tutup modal kalau klik di luar
+        document.getElementById('diamondModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
 </body>
 </html>
