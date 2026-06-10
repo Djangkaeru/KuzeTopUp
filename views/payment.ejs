@@ -7,8 +7,6 @@
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- QR Code Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -101,51 +99,63 @@
                 <% if (transaction.payment === 'QRIS') { %>
                 <div class="payment-method-info">
                     <div class="qris-box">
-                        <!-- Badge DEMO -->
-                        <div class="qris-demo-badge">
-                            <i class="fas fa-flask"></i> DEMO — Tidak ada uang nyata
+
+                        <!-- Header QRIS -->
+                        <div class="qris-header">
+                            <div class="qris-logo-row">
+                                <span class="qris-logo-text">QRIS</span>
+                                <span class="qris-demo-badge"><i class="fas fa-flask"></i> SIMULASI</span>
+                            </div>
+                            <p class="qris-merchant-name">KuzeTopUp Store</p>
                         </div>
 
-                        <!-- Header QRIS bergambar -->
-                        <div class="qris-header-bar">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/QRIS_logo.svg/320px-QRIS_logo.svg.png"
-                                 alt="QRIS" class="qris-logo-img" onerror="this.style.display='none'">
-                            <span class="qris-header-title">KuzeTopUp</span>
+                        <!-- QR Code Container -->
+                        <div class="qris-qr-wrapper" id="qrisWrapper">
+                            <div class="qris-loading" id="qrisLoading">
+                                <div class="qris-spinner"></div>
+                                <span>Membuat QR Code...</span>
+                            </div>
+                            <div class="qris-error" id="qrisError" style="display:none">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Gagal memuat QR Code</span>
+                            </div>
+                            <img id="qrisImg" src="" alt="QRIS QR Code" class="qris-img" style="display:none">
                         </div>
 
-                        <!-- QR Code Canvas -->
-                        <div class="qris-canvas-wrap">
-                            <canvas id="qrisCanvas"></canvas>
+                        <!-- Nominal -->
+                        <div class="qris-amount-box">
+                            <span class="qris-amount-label">Total Pembayaran</span>
+                            <span class="qris-amount-value">Rp <%= transaction.total.toLocaleString('id-ID') %></span>
                         </div>
 
-                        <!-- Nominal di bawah QR -->
-                        <div class="qris-amount-label">
-                            <span>Nominal Pembayaran</span>
-                            <strong>Rp <%= transaction.total.toLocaleString('id-ID') %></strong>
+                        <!-- Kode Transaksi -->
+                        <div class="qris-trxcode">
+                            <i class="fas fa-receipt"></i>
+                            <span><%= transaction.code %></span>
                         </div>
 
-                        <!-- Kode transaksi -->
-                        <div class="qris-txcode">
-                            <i class="fas fa-hashtag"></i> <%= transaction.code %>
+                        <!-- Tombol aksi -->
+                        <div class="qris-actions" id="qrisActions" style="display:none">
+                            <button class="btn-qris-download" onclick="downloadQR()">
+                                <i class="fas fa-download"></i> Simpan QR
+                            </button>
+                            <button class="btn-qris-refresh" onclick="loadQRIS()">
+                                <i class="fas fa-rotate-right"></i> Refresh
+                            </button>
                         </div>
 
                         <small class="qris-note">
-                            <i class="fas fa-circle-info"></i>
-                            Scan QR ini dengan aplikasi e-wallet apapun
+                            <i class="fas fa-shield-halved"></i>
+                            QR ini adalah simulasi &mdash; tidak memproses uang nyata
                         </small>
-
-                        <!-- Tombol Download QR -->
-                        <button class="btn-download-qr" onclick="downloadQR()">
-                            <i class="fas fa-download"></i> Download QR
-                        </button>
                     </div>
 
                     <div class="payment-steps">
                         <div class="step"><span>1</span> Buka aplikasi e-wallet kamu</div>
-                        <div class="step"><span>2</span> Pilih fitur Scan / QRIS</div>
-                        <div class="step"><span>3</span> Scan QR di atas</div>
-                        <div class="step"><span>4</span> Bayar sebesar <strong>Rp <%= transaction.total.toLocaleString('id-ID') %></strong></div>
-                        <div class="step"><span>5</span> Screenshot bukti pembayaran</div>
+                        <div class="step"><span>2</span> Pilih fitur <strong>Scan / QRIS</strong></div>
+                        <div class="step"><span>3</span> Arahkan kamera ke QR di atas <em>(simulasi)</em></div>
+                        <div class="step"><span>4</span> Nominal <strong>Rp <%= transaction.total.toLocaleString('id-ID') %></strong> sudah terisi otomatis</div>
+                        <div class="step"><span>5</span> Screenshot &amp; upload bukti di bawah</div>
                     </div>
                 </div>
 
@@ -269,158 +279,8 @@
         </div>
     </section>
 
-    <!-- ─── QRIS STYLES ─────────────────────────────────────────── -->
-    <style>
-        .qris-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: #fff;
-            border-radius: 20px;
-            border: 2px solid #e8e8e8;
-            padding: 20px 24px 16px;
-            max-width: 280px;
-            margin: 0 auto 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-        .qris-demo-badge {
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            color: #fff;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
-        }
-        .qris-header-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 2px solid #e8e8e8;
-            width: 100%;
-            padding-bottom: 10px;
-            margin-bottom: 14px;
-            justify-content: center;
-        }
-        .qris-logo-img {
-            height: 22px;
-            object-fit: contain;
-        }
-        .qris-header-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #333;
-            letter-spacing: 1px;
-        }
-        .qris-canvas-wrap {
-            background: #fff;
-            padding: 10px;
-            border-radius: 12px;
-            border: 1.5px solid #eee;
-            margin-bottom: 14px;
-        }
-        .qris-canvas-wrap canvas,
-        .qris-canvas-wrap img {
-            display: block;
-            border-radius: 6px;
-        }
-        .qris-amount-label {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            margin-bottom: 8px;
-        }
-        .qris-amount-label span {
-            font-size: 11px;
-            color: #888;
-        }
-        .qris-amount-label strong {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1a1a2e;
-        }
-        .qris-txcode {
-            font-size: 11px;
-            color: #aaa;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-        }
-        .qris-note {
-            font-size: 11px;
-            color: #999;
-            text-align: center;
-            margin-bottom: 12px;
-            line-height: 1.5;
-        }
-        .btn-download-qr {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-download-qr:hover { opacity: 0.85; }
-    </style>
-
     <script>
         const transactionCode = '<%= transaction.code %>';
-        const transactionPayment = '<%= transaction.payment %>';
-        const transactionTotal = <%= transaction.total %>;
-
-        // ─── GENERATE QRIS ────────────────────────────────────────────
-        if (transactionPayment === 'QRIS') {
-            window.addEventListener('DOMContentLoaded', () => {
-                // Format data QRIS demo (simulasi format QRIS Indonesia)
-                const qrisData = [
-                    '000201',                        // Payload Format Indicator
-                    '010212',                        // Point of Initiation Method (dynamic)
-                    '2659',                          // Merchant Account
-                    '0014ID.CO.KUZETOPUP',           // Merchant identifier
-                    '0115KuzeTopUp Store',
-                    '52044816',                      // Merchant Category Code (game)
-                    '5303360',                       // Transaction Currency (IDR)
-                    '54' + String(transactionTotal).length.toString().padStart(2,'0') + transactionTotal,
-                    '5802ID',                        // Country Code
-                    '5913KuzeTopUp',                 // Merchant Name
-                    '6013Jakarta Pusat',             // Merchant City
-                    '6215' + transactionCode,        // Reference / Kode Transaksi
-                    '6304'                           // CRC placeholder
-                ].join('');
-
-                const canvas = document.getElementById('qrisCanvas');
-                QRCode.toCanvas(canvas, qrisData, {
-                    width: 200,
-                    margin: 1,
-                    color: {
-                        dark: '#1a1a2e',
-                        light: '#ffffff'
-                    },
-                    errorCorrectionLevel: 'M'
-                }, (err) => {
-                    if (err) console.error('QR Error:', err);
-                });
-            });
-        }
-
-        // ─── DOWNLOAD QR ──────────────────────────────────────────────
-        function downloadQR() {
-            const canvas = document.getElementById('qrisCanvas');
-            if (!canvas) return;
-            const link = document.createElement('a');
-            link.download = `QRIS-${transactionCode}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            showToast('QR Code berhasil didownload!', 'success');
-        }
 
         // ─── COUNTDOWN ────────────────────────────────────────────────
         let timeLeft = 30 * 60;
@@ -503,6 +363,60 @@
                 btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Bukti';
             }
         }
+
+        // ─── QRIS: LOAD QR CODE ───────────────────────────────────────
+        let qrDataUrl = null;
+
+        async function loadQRIS() {
+            const wrapper   = document.getElementById('qrisWrapper');
+            const loading   = document.getElementById('qrisLoading');
+            const errorBox  = document.getElementById('qrisError');
+            const img       = document.getElementById('qrisImg');
+            const actions   = document.getElementById('qrisActions');
+
+            if (!wrapper) return; // bukan halaman QRIS
+
+            // reset state
+            loading.style.display  = 'flex';
+            errorBox.style.display = 'none';
+            img.style.display      = 'none';
+            actions.style.display  = 'none';
+            qrDataUrl = null;
+
+            try {
+                const res  = await fetch(`/qris/${transactionCode}`);
+                const data = await res.json();
+
+                if (data.success && data.qr) {
+                    qrDataUrl     = data.qr;
+                    img.src       = data.qr;
+                    img.style.display      = 'block';
+                    actions.style.display  = 'flex';
+                    showToast('QR Code siap di-scan!', 'success');
+                } else {
+                    throw new Error('no qr');
+                }
+            } catch {
+                errorBox.style.display = 'flex';
+                showToast('Gagal membuat QR Code', 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // ─── QRIS: DOWNLOAD QR ────────────────────────────────────────
+        function downloadQR() {
+            if (!qrDataUrl) return;
+            const a = document.createElement('a');
+            a.href     = qrDataUrl;
+            a.download = `QRIS-KuzeTopUp-${transactionCode}.png`;
+            a.click();
+        }
+
+        // ─── AUTO-LOAD QRIS JIKA METODE = QRIS ───────────────────────
+        window.addEventListener('DOMContentLoaded', () => {
+            if (document.getElementById('qrisWrapper')) loadQRIS();
+        });
 
         // ─── TOAST ────────────────────────────────────────────────────
         function showToast(message, type = 'error') {
