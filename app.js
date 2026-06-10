@@ -368,7 +368,15 @@ app.get('/qris/:code', requireLogin, async (req, res) => {
 });
 
 // ─── UPLOAD BUKTI PEMBAYARAN ──────────────────────────────────────────
-app.post('/upload-proof', requireLogin, upload.single('proof'), async (req, res) => {
+app.post('/upload-proof', requireLogin, (req, res, next) => {
+    upload.single('proof')(req, res, (err) => {
+        if (err) {
+            // multer error (ukuran terlalu besar, bukan gambar, dll)
+            return res.json({ success: false, error: err.message || 'File tidak valid!' });
+        }
+        next();
+    });
+}, async (req, res) => {
     try {
         const { code } = req.body;
         if (!req.file) return res.json({ success: false, error: 'File tidak ditemukan!' });
