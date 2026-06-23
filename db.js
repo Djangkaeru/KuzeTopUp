@@ -1,16 +1,16 @@
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',         // ganti kalau kamu punya password MySQL
-    database: 'kuzetopup',
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASS || '',
+    database: process.env.DB_NAME || 'kuzetopup',
+    port: process.env.DB_PORT || 3306,
     waitForConnections: true,
     connectionLimit: 10,
     timezone: '+07:00'
 });
 
-// Test koneksi saat server start
 pool.getConnection()
     .then(conn => {
         console.log('✅ MySQL terhubung!');

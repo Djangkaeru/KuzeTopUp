@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
@@ -520,6 +521,6 @@ app.get('/admin/games', requireAdmin, (req, res) => {
 });
 
 // ─── START SERVER ─────────────────────────────────────────────────────
-app.listen(3000, () => {
+app.listen(process.env.PORT || 3000, () => {
     console.log('KuzeTopUp berjalan di http://localhost:3000');
 });
